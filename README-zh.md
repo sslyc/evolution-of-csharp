@@ -690,11 +690,13 @@ status = (Status)statusBoxing;  //引发拆箱
 
 枚举是值类型的，默认情况下等价于int类型，且可以与int类型显式互转。这点与Java的枚举类不同。C#的enum定义更像C++。
 
-枚举默认从0开始，每项递增。但是你仍然可以指定枚举项对应的值。你还可以只指定一部分枚举项，未指定的枚举项会从上一个指定了值的枚举项顺序递增下来。
+枚举定义中列举可能出现的枚举项名称，这些名称分别对应一个int值。其值默认从0开始，每项递增。
 
-枚举允许赋值未在枚举项中列出的int值，作为枚举的值。即：可以将任意整数显式转换成枚举类型，并赋值给该类型对象，不会报错。
+但是你仍然可以指定枚举项对应的值，方法是在枚举项后面书写 `= 值` 。你还可以只指定一部分枚举项的值而省略另一部分，未指定值的枚举项会从上一个指定了值的枚举项顺序递增下来。
 
-枚举的ToString方法，返回的是代码的定义文本。但是如果值对应的项不存在，则ToString直接输出数字。
+枚举还允许赋值为未在枚举项中列出的int值。即：可以将任意int值显式转换成枚举类型，并赋值给该类型对象，不会报错。
+
+枚举的ToString方法，返回的是该项的定义文本。但是如果值未对应已定义的项，则ToString直接输出数字。
 
 ```c#
 public enum StatusCode //定义枚举
@@ -712,7 +714,7 @@ code = (StatusCode)100;  //有效赋值，不会报错
 Console.WriteLine(code.ToString()); //输出为 100
 ```
 
-枚举也可以指定其实现类型。方法是用类似继承的语法，枚举定义时在枚举名后面使用`:`指明实现类型。实现类型只能是byte、sbyte、short、double、ushort、int、uint、long、ulong这几个整数类型。虽然这里是`:`符号，但是我们不称之为继承，毕竟Struct本就无法继承，并且枚举既不能重写方法，也无法定义其他方法。
+枚举也可以指定其实现类型。方法是用类似继承的语法，枚举定义时在枚举名后面使用 `:` 指明实现类型。实现类型只能是byte、sbyte、short、ushort、int、uint、long、ulong这几个**整数类型**。虽然这里是 `:` 符号，但是我们不称之为继承，毕竟Struct本就无法继承，并且枚举既不能重写方法，也无法定义其他方法。
 
 ```c#
 public enum StatusCode : ulong //定义枚举，并指定枚举为ulong类型
@@ -728,9 +730,10 @@ public enum StatusCode : ulong //定义枚举，并指定枚举为ulong类型
 > - C#枚举为值类型，等价于int（或其他整数类型）。Java的枚举实际是枚举类，因而是引用类型。
 > - C#枚举定义仅能列举枚举项，不支持编写成员方法、不能编写构造器，虽然仍能使用object类、ValueType类、Enum类定义的方法，但是却不能重写它们。Java枚举定义实际是定义了枚举类和该类的常量对象。Java的枚举定义中可以插入构造器、方法等，也可以重写toString方法。
 > - C#的枚举仅能指定实现类型，并且必须为整数类型。Java的枚举虽无法继承类，但是可以实现接口。
-> - C#枚举可以与int（或者其指定实现类型）直接互转，并且支持将未在枚举中定义的整数值赋值给枚举对象。而Java与int等类型互转，需要通过枚举类定义的字段和get、set方法来实现，并且不存在超出枚举定义项的赋值。
-> - C#可以给每个枚举项直接指定值，语法为`枚举项=值`，值为所指定类型，默认是int。而Java必须通过构造器来实现，并在定义枚举项时指定该项如何使用构造器，因而语法是`枚举项(构造器参数列表)`。
+> - C#枚举可以与int等整数类型直接互转，并且支持将未在枚举中定义的整数值赋值给枚举对象。而Java与int等类型互转，需要通过枚举类定义的字段和get、set方法来实现，并且不存在超出枚举定义项的赋值。
+> - C#可以给每个枚举项直接指定值，语法为 `枚举项=值` ，值为所指定类型，默认是int。而Java必须通过构造器来实现，并在定义枚举项时指定该项如何使用构造器，因而语法是 `枚举项(构造器参数列表)` 。
 > - Java的枚举都有个original方法，它返回的是该枚举项的序号，且固定顺序为0、1、2...。从概念、用法来讲，它并不等同于C#意义上的枚举值。
+> - C#支持位枚举，而Java不支持。（马上我们会讲到位枚举。）
 > - 最后又是习惯问题。C#的枚举项一般仍旧按照Pascal规则命名，而Java的枚举项习惯于全大写字母，单词间用下划线连接。
 
 > C#和Java的枚举，可以说各有优劣。
@@ -797,6 +800,8 @@ Operation operation = Operation.Execute | Operation.Add; //赋值位枚举为多
 Console.WriteLine(operation.ToString());  //输出为 Add, Execute。如果未标记FlagsAttribute，则输出为 9
 bool haveRemove = operation.HasFlag(Operation.Remove); //查询位枚举是否包含枚举项
 ```
+
+值得注意的是：任何枚举都可以使用HasFlag方法，即使未标注 `FlagsAttribute` 。
 
 ### 引用类型（Reference Type）
 
@@ -2194,14 +2199,14 @@ bool isNovelBook2 = book is NovelBook; //true，判断实际类型
 
 `as`运算符类似类型转换，用于将对象转换成指定类型。
 
-`someObject as SomeClass`等价于`someObject is SomeClass ? (SomeClass)someObject : (SomeClass)null`
+`someObject as SomeClass` 等价于 `someObject is SomeClass ? (SomeClass)someObject : (SomeClass)null`
 
 因此，它跟强制类型转换有关，但又不同：
 
 - `as`右侧的类型，只能适用于引用类型，不可适用于值类型
 - `as`不会抛出异常，如果无法进行类型转换，会返回null
 
-`as`不同于`is`，在编译器阶段验证时，如果确认对象无法进行到目标类型的类型转换，则会报错。
+`as`不同于`is`，在编译器验证时，如果确认对象无法进行到目标类型的类型转换，则会报错。根据上面的等价代码，这点很好理解。
 
 ## unsafe上下文
 
@@ -2833,7 +2838,7 @@ foreach (var integer in infinite)
 
 ## C# 2.0的其他改进
 
-- getter、setter的单独可访问性：现在，getter和setter支持使用不同的访问级别：
+- **getter、setter的单独可访问性**：现在，getter和setter支持使用不同的访问级别：
 
     ```c#
     public string Name 
@@ -2843,8 +2848,8 @@ foreach (var integer in infinite)
     }
     ```
 
-- static类：`static`可以用来修饰类。static的类中只能包含static的成员。
-- 数组的协变：数组支持了协变。但C# 2.0的变种不是完整的功能。完整的功能要在C# 4.0才引入。我们会在C#4.0中，同泛型的[协变和逆变](#协变（Covariant）、逆变（Contravariant）)一起介绍。
+- **static类**：`static`可以用来修饰类。static的类中只能包含static的成员。
+- **数组的协变**：数组支持了协变。但C# 2.0的变种不是完整的功能。完整的功能要在C# 4.0才引入。我们会在C#4.0中，同泛型的[协变和逆变](#协变（Covariant）、逆变（Contravariant）)一起介绍。
 
 # C# 3.0 —— 分道扬镳、放飞自我、跨时代创新
 
@@ -4318,9 +4323,9 @@ var mixed = new Mixed
 
 ## C# 6.0的其他改进
 
-- 静态引用（Static Using)：已在C# 1.0时介绍过。
-- 表达式主体（Expression-Bodied Member）：6.0支持的比较少，我们等到C# 7.0再一起讲。
-- Catch和Finally块中，现在支持使用await运算符了。
+- **静态引用**（Static Using)：已在C# 1.0时介绍过。
+- **表达式主体**（Expression-Bodied Member）：6.0支持的比较少，我们等到C# 7.0再一起讲。
+- **Catch和Finally块中**，现在**支持使用await**运算符了。
 
 # C# 7.0—— Python是个好东西
 
@@ -4755,8 +4760,8 @@ GetAwaiter方法返回一个INotifyCompletion或者ICriticalNotifyCompletion接�
 
 ## C# 7.0的其他改进
 
-- 二进制文本：现在可以直接定义二进制常量，语法为0bxxxxxx。例如：`0b101011100`
-- 数组分隔符：数字之间可以用`_`分隔。`_`可以有任意多个，可以加在除了第一位、最后一位和小数点前后的任何位置，包括放在`_`旁。例如：`var n = 1_2__3___4____5_____6_______7;`，它等价于`var n = 1234567;`。
+- **二进制文本**：现在可以直接定义二进制常量，语法为0bxxxxxx。例如：`0b101011100`
+- **数字分隔符**：数字之间可以用`_`分隔。`_`可以有任意多个，可以加在除了第一位、最后一位和小数点前后的任何位置，包括放在`_`旁。例如：`var n = 1_2__3___4____5_____6_______7;`，它等价于`var n = 1234567;`。
 
 > Java引入二进制文本和数字分隔符要早得多，在Java 7便提供了支持。顺便说一句：C#至今还是不支持八进制文本，而Java和C++均支持。可能是八进制实在是用的太少了。
 
@@ -4900,9 +4905,9 @@ shop.Sell(amount: 10, "毛巾", userName: "张三");  //还可以这样用，仍
 
 ### C# 7.2的其他改进
 
-- `private protected`访问修饰符：表示protect and internal，这个已经在C# 1.0的可访问性修饰符中介绍过了。
-- 数值文字中的前导下划线：C#7.0新增的数字下划线，不支持直接紧跟在0x或者0b的后面，例如`0x_8f7d`在之前是非法的，但是现在合法了。
-- 条件ref表达式：ref赋值语句，现在可以支持条件运算符`?:`。例如：`ref var r = ref (arr != null ? ref arr[0] : ref otherArr[0]);`。注意在条件表达式运算结果上还要加`ref`。
+- **`private protected`访问修饰符**：表示protect and internal，这个已经在C# 1.0的可访问性修饰符中介绍过了。
+- **数值文字中的前导下划线**：C#7.0新增的数字下划线，不支持直接紧跟在0x或者0b的后面，例如`0x_8f7d`在之前是非法的，但是现在合法了。
+- **条件ref表达式**：ref赋值语句，现在可以支持条件运算符`?:`。例如：`ref var r = ref (arr != null ? ref arr[0] : ref otherArr[0]);`。注意在条件表达式运算结果上还要加`ref`。
 
 ## C# 7.3的改进
 
@@ -4986,11 +4991,11 @@ Some(in x); //这将调用第二个方法
 
 ### C# 7.3的其他改进
 
-- ref局部变量可再分配：ref的变量之前只能赋值一次，现在可以在赋值后重新被赋值了。
-- 泛型约束又新增了一种：`unmanaged`。约束为非托管类型（值类型，并且如果是struct则每个字段都不能是引用类型，如果有struct嵌套，嵌套的struct也是）。例如：`public void Test<T>(T arg) where T : unmanaged {}`
-- 基于模式的fixed语句：从前的`fixed`只能用来固定数组或者string类型。由于现在新增了Span\<T>等类型，如果还按照之前的来则无法用`fixed`固定。现在，只要你的struct拥有一个方法：`ref [readonly] T GetPinnableReference()`，并且其中`T`是非托管类型的。该引用类型的struct就可以直接使用fixed语句固定。
-- 访问fixed数组的索引可以不用fixed：之前我们说过，unsafe的struct可以声明fixed的数组。现在如果某个指针想要指向该数组的某个元素，可以不用fixed块固定，但仍然需要使用unsafe上下文。例如`unsafe struct S`包含fixed的数组字段`public fixed int FixedField[100];`，则`int* ptr = s.FixedField[5];`语句不必使用fixed块。
-- 对方法重载（Overload）的编译器解析改进：对方法重载在各种情况下编译器如何解析做出了改进。这使得二义性错误变得更少发生。规则比较复杂，这里不多赘述。
+- **ref局部变量可再分配**：ref的变量之前只能赋值一次，现在可以在赋值后重新被赋值了。
+- **泛型约束又新增了一种：`unmanaged`**。约束为非托管类型（值类型，并且如果是struct则每个字段都不能是引用类型，如果有struct嵌套，嵌套的struct也是）。例如：`public void Test<T>(T arg) where T : unmanaged {}`
+- **基于模式的fixed语句**：从前的`fixed`只能用来固定数组或者string类型。由于现在新增了Span\<T>等类型，如果还按照之前的来则无法用`fixed`固定。现在，只要你的struct拥有一个方法：`ref [readonly] T GetPinnableReference()`，并且其中`T`是非托管类型的。该引用类型的struct就可以直接使用fixed语句固定。
+- **访问fixed数组的索引可以不用fixed**：之前我们说过，unsafe的struct可以声明fixed的数组。现在如果某个指针想要指向该数组的某个元素，可以不用fixed块固定，但仍然需要使用unsafe上下文。例如`unsafe struct S`包含fixed的数组字段`public fixed int FixedField[100];`，则`int* ptr = s.FixedField[5];`语句不必使用fixed块。
+- **对方法重载（Overload）的编译器解析改进**：对方法重载在各种情况下编译器如何解析做出了改进。这使得二义性错误变得更少发生。规则比较复杂，这里不多赘述。
 
 # C# 8.0 —— 当语法升级成为日常
 
@@ -5471,11 +5476,11 @@ public void DoSomething(string word)
 
 ## C# 8.0的其他改进
 
-- 字符串内插增强：同时存在`$`和`@`时，之前只能`$`在前，现在哪个符号在前都可以。
-- 静态本地函数：本地函数现在可以用`static`修饰。使用`static`修饰的静态函数无法获取当前上下文中的局部变量和当前类内的非静态字段、属性。
-- 可释放的`ref struct`：`ref struct`因为无法实现接口，所以之前无法实现IDisposable。现在，只需要`ref struct`实现Dispose方法，便可以使用using进行自动释放。这对`ref readonly struct`同样适用。
-- 折叠的stackalloc初始化表达式：之前已经提过，现在可以直接使用`stackalloc [] { 1, 2 }`的语法来初始化栈上数组。
-- 非托管构造类型：任何非托管类型的数组，现在都可以使用`stackalloc`分配了。
+- **字符串内插增强**：同时存在`$`和`@`时，之前只能`$`在前，现在哪个符号在前都可以。
+- **静态本地函数**：本地函数现在可以用`static`修饰。使用`static`修饰的静态函数无法获取当前上下文中的局部变量和当前类内的非静态字段、属性。
+- **可释放的`ref struct`**：`ref struct`因为无法实现接口，所以之前无法实现IDisposable。现在，只需要`ref struct`实现Dispose方法，便可以使用using进行自动释放。这对`ref readonly struct`同样适用。
+- **折叠的`stackalloc`初始化表达式**：之前已经提过，现在可以直接使用`stackalloc [] { 1, 2 }`的语法来初始化栈上数组。
+- **非托管构造类型**：任何非托管类型的数组，现在都可以使用`stackalloc`分配了。
 
 # C# 9.0 —— 新的征程
 
@@ -5744,7 +5749,7 @@ var season = month switch
     >= 6 when month < 9 => "夏",                 //关系模式+when子句
     >= 9 and < 12 => "秋",                       //关系模式+逻辑模式
     12 => "冬",                                  //常量模式
-    1 or 2 => "冬",                              //常量模式+关系模式
+    1 or 2 => "冬",                              //常量模式+逻辑模式
     int.MaxValue when 1 == 1 => "未知",          //常量模式+when子句
     var _ => throw new Exception("月份不合法"),  //var模式+弃元
     // _ => thrown new Exception()               //弃元模式，这里因为有var模式了，所以无法达到此分支。此处如果取消注释，编译器会报错。
@@ -5871,13 +5876,13 @@ M有两个重载，而条件表达式 `b ? 1 : 2`会根据更优转换的规则�
 
 ## C# 9.0的其他改进
 
-- `static`匿名方法：现在匿名方法、Lambda，也支持设置为静态的了。静态的匿名方法跟静态的本地函数一样，无法访问当前语句所在上下文中的局部变量、类的非静态成员。
-- `foreach`的改进：一个类的GetEnumerator方法现在即使是扩展方法，该类对象也可以使用`foreach`来遍历了。
-- 本地函数的特性：应用于方法、方法参数或泛型类型参数的特性，现在都可以应用于本地函数。与用在方法上具有相同含义。
-- 本机大小的整数：新增两个关键词`nint`和`nuint`，用于定义本机大小的整数。
-- 函数指针：在unsafe中支持函数指针，以便于更方便的调用C++写的库。方法是使用`delegate* <参数类型1,参数类型2,...,返回类型>`来定义。返回类型可以是void。
-- 禁止发出localsinit标记：C#不允许使用未赋初值的局部变量。初始化局部变量有两种方式：一种是直接赋值；另一种是给含有局部变量的方法发送localsinit标记。发送localsinit可用于初始化分配在栈上的数组，使它们在使用前所有内存元素被全部赋值成0。用过C++的小伙伴应该都知道，没有初始化的内存可能残余之前的数据，或者干脆是内存刚加电时的混乱状态，直接拿来使用是不安全的。所以使用前对内存区域进行初始化本没有毛病。但是，如果数组的大小较大，初始化可能带来额外的性能损失。C#现在提供了跳过初始化的选项，只需要在不希望给局部变量发送localsinit标记的方法上标注`SkipLocalsInitAttribute`特性即可。
-- 分部方法的优化：如之前提到过的，在这个版本中，partial的方法的限制（不能指定修饰符、不能返回`void`、不能带`out`参数）均被取消。但是要求必须提供实现。
+- **`static`匿名方法**：现在匿名方法、Lambda，也支持设置为静态的了。静态的匿名方法跟静态的本地函数一样，无法访问当前语句所在上下文中的局部变量、类的非静态成员。
+- **`foreach`的改进**：一个类的GetEnumerator方法现在即使是扩展方法，该类对象也可以使用`foreach`来遍历了。
+- **本地函数的特性**：应用于方法、方法参数或泛型类型参数的特性，现在都可以应用于本地函数。与用在方法上具有相同含义。
+- **本机大小的整数**：新增两个关键词`nint`和`nuint`，用于定义本机大小的整数。
+- **函数指针**：在unsafe中支持函数指针，以便于更方便的调用C++写的库。方法是使用`delegate* <参数类型1,参数类型2,...,返回类型>`来定义。返回类型可以是void。
+- **禁止发出localsinit标记**：C#不允许使用未赋初值的局部变量。初始化局部变量有两种方式：一种是直接赋值；另一种是给含有局部变量的方法发送localsinit标记。发送localsinit可用于初始化分配在栈上的数组，使它们在使用前所有内存元素被全部赋值成0。用过C++的小伙伴应该都知道，没有初始化的内存可能残余之前的数据，或者干脆是内存刚加电时的混乱状态，直接拿来使用是不安全的。所以使用前对内存区域进行初始化本没有毛病。但是，如果数组的大小较大，初始化可能带来额外的性能损失。C#现在提供了跳过初始化的选项，只需要在不希望给局部变量发送localsinit标记的方法上标注`SkipLocalsInitAttribute`特性即可。
+- **分部方法的优化**：如之前提到过的，在这个版本中，partial的方法的限制（不能指定修饰符、不能返回`void`、不能带`out`参数）均被取消。但是要求必须提供实现。
 
 # C# 10.0 —— 学无止尽
 
@@ -5964,18 +5969,18 @@ obj.TracedMethod(1 + 2 + 3);  //此时，方法内的argExpression参数会被�
 
 ## C# 10.0的其他改进
 
-- 结构的改进：
+- **结构的改进**：
     - 结构现在可以声明无参构造器了
     - 结构现在也可以用with运算符来赋值了，之前只能用在record上
     - 针对匿名类型，现在也可以使用with运算符
 
-- 内插字符串处理程序：现在你可以不使用系统的内插字符串处理程序，而去自己定义一个内插字符串的处理程序。代码中的内插字符串会转交由你定义的类来处理。  
-- 全局引用：可以使用`global using`语句来引用命名空间。这样做时，当前编译环境下的所有待编译文件，默认都会using该命名空间。
-- 文件范围的命名空间声明：现在`namespace`的声明可以不必使用花括号`{}`将命名空间内的定义包裹起来，而是可以将namespace作为单独的语句声明。这样做时，namespace将会对当前文件生效。这样做可以减少缩进。这跟Java的package很像。例如：`namespace TestApp;`
-- 记录类型，现在可以在重写ToString时，标记为密封（sealed）
-- 明确赋值的编译器改进：在开启可null感知上下文时，编译器对某些场景的null判断做了优化，变得更加智能了。主要是在if判断中，如果if已经可明确推断某变量不为null时，不再会给出可能为null警告。
-- AsyncMethodBuilderAtrribute现在可以被添加到方法上了，之前只能被添加到类上（C# 7.0，可以查看之前的介绍）。这样做可以单独指定某个方法采用特定的异步方法构建器，而不是所有返回该类型的异步方法都采用此构建器。
-- 预处理指令\#line增强：现在的语法支持`#line (起始行,起始列) - (结束行,结束列) 列偏移量 "文件名"`，不过一般用不上。
+- **内插字符串处理程序**：现在你可以不使用系统的内插字符串处理程序，而去自己定义一个内插字符串的处理程序。代码中的内插字符串会转交由你定义的类来处理。  
+- **全局引用**：可以使用`global using`语句来引用命名空间。这样做时，当前编译环境下的所有待编译文件，默认都会using该命名空间。
+- **文件范围的命名空间声明**：现在`namespace`的声明可以不必使用花括号`{}`将命名空间内的定义包裹起来，而是可以将namespace作为单独的语句声明。这样做时，namespace将会对当前文件生效。这样做可以减少缩进。这跟Java的package很像。例如：`namespace TestApp;`
+- **记录类型**，现在可以在重写ToString时，标记为密封（sealed）
+- **明确赋值的编译器改进**：在开启可null感知上下文时，编译器对某些场景的null判断做了优化，变得更加智能了。主要是在if判断中，如果if已经可明确推断某变量不为null时，不再会给出可能为null警告。
+- **AsyncMethodBuilderAtrribute现在可以被添加到方法上了**，之前只能被添加到类上（C# 7.0，可以查看之前的介绍）。这样做可以单独指定某个方法采用特定的异步方法构建器，而不是所有返回该类型的异步方法都采用此构建器。
+- **预处理指令\#line增强**：现在的语法支持`#line (起始行,起始列) - (结束行,结束列) 列偏移量 "文件名"`，不过一般用不上。
 
 ---
 
@@ -6174,1368 +6179,3 @@ So，how to get一个CShaper的代码Style呢？如果你已经很熟悉Java了�
 经2月有余的打磨，本文终于完成。部分复杂章节经反复斟酌，修改不下10几稿。然而由于时间仓促，难免仍会有疏漏。对文中错误，欢迎大家留言批评指正。
 
 作者欢迎大家分享本文。但请尊重作者的劳动成果和版权。**如需转载，请在显著位置标明出处。**
-静态字段
-    public dynamic Prop {get; set;} //属性
-    public dynamic ExampleMethod(dynamic param) { ... } //作为方法返回类型、参数类型
-}
-```
-
-动态类型具有以下特点：
-
-- 动态类型对象可以赋值为任何类型，也可以赋值给任何类型（可能出错）。
-- 动态类型被重新赋值时，可以改变类型。
-- 动态类型进行运算、获取成员都不会进行编译器检查。但是可能会在运行时抛出异常。
-    - 例如：赋值一个动态对象dyn为string类型，写下`dyn*3`这样的表达式编译器不会报错，但在运行时会抛出异常。
-
-这里有必要将一个特殊的类型：**ExpandoObject**
-
-ExpandoObject类的对象支持动态添加成员。因此不必预先定义，便可以使用`.`运算符来赋值、获取其属性。
-
-```c#
-dynamic dyn = new ExpandoObject();
-dyn.Number = 10;  //动态添加Number属性，并赋值为10
-dyn.Increment = (Action)(()=> dyn.Number++; );  //动态添加Increment，作为一个方法（委托）
-Console.WriteLine(dyn.Number);  //输出为 10
-dyn.Increment();  
-Console.WriteLine(dyn.Number);  //输出为 11
-Console.WriteLine(dyn.Nothing);  //获取Nothing属性，这里不会抛出异常，而是返回null
-```
-
-动态类型可以用于：
-
-- 调用动态语言类型的库，如python编写的库
-- 接收可变的数据，如json反序列化的数据
-- 不必事先编写类定义，方便自上而下的代码编写，使开发者专注于逻辑。
-- 偷懒省事儿
-
-## 命名参数（Named Argument）
-
-我们在进行方法调用时，传递给方法每个参数会按照声明的顺序排列。我们把这种按顺序传递的参数称作**位置参数**。
-
-从C# 4.0开始，支持另一种传递参数的方式：显示的指明要传递的参数名称，而不必再遵守参数的位置顺序。我们把这种传递方式称为**命名参数**。
-
-命名参数的语法为：`参数名:值`
-
-```c#
-public class Shop
-{
-    public void Sell(string userName, string goodsName, int amount) {...} //定义含有三个参数的方法
-}
-
-Shop shop = new shop();
-shop.Sell("张三", "毛巾", 10);  //常规调用
-
-shop.Sell(userName: "张三", goodsName: "毛巾", amount: 10);  //用命名参数语法调用
-shop.Sell(amount: 10, userName: "张三", goodsName: "毛巾");  //调换命名参数的顺序
-```
-
-实际上，允许位置参数与命名参数的混用。但是只允许将位置参数放在前面（C#7.2后，这条限制被取消）
-
-```c#
-shop.Sell("张三", amount: 10， goodsName: "毛巾");
-```
-
-### 可选参数（Optional Argument）
-
-可选参数的语法基于命名参数。它是针对有默认值的参数的。
-
-在调用包含具有默认值参数的方法时，可以使用命名参数的语法指定含默认值参数的值。指定了值的，使用该指定值；未指定值的，使用默认值。
-
-```c#
-public class Student
-{
-    public void Study(string subject, int hours = 2, bool workHard = true) {...} //含有两个有默认值的参数
-}
-
-Student student = new Student();
-student.Study("语文");  //常规调用，省略所有默认参数
-student.Study("语文", 10);  //常规调用，省略最后一个默认参数
-student.Study("语文", 2, false);  //常规调用，提供全部参数
-
-student.Study("语文", workHard: false); //采用可选参数语法，并且只提供workHard参数的值，hours参数采用默认值
-```
-
-## 协变（Covariant）、逆变（Contravariant）
-
-协变和逆变合称**变种**（Variant）。是指允许数组、泛型委托和泛型接口进行隐式类型转换的机制。
-
-协变是指将元素类型变更为比原类型范围更大的类型（如父类型、接口等）。它用于获取数据，并按照更大范围的类型使用。
-
-逆变是指将元素类型变更为比原类型更精确的类型（如子类型，实现此接口的类型等）。它用于在精确类型中调用作用于更大范围类型的方法。
-
-听不懂？没关系！简答直观说来：
-
-- 协变：子类型 -> 基类型，用于获取
-- 逆变：基类型 -> 子类型，用于操作
-
-变种的支持情况：
-
-- 数组的变种（C#2.0）
-- 委托的变种（C#4.0）
-- 泛型接口的变种（C#4.0）
-
-```c#
-//数组的协变
-Cat[] cats = { new Cat("阿喵"), new Cat("阿咪") };
-Animal [] animals = cats;   //被赋值的数组元素右侧数组元素范围更大的类型（基类）
-
-//接口的协变
-IEnumerable<string> strings = new List<string>();   
-IEnumerable<object> objects = strings;  //object比string的范围更大
-
-//委托的逆变
-Action<object> actObject = someMethod;
-Action<string> actString = actObject;  //string比object的范围更小
-```
-
-具体分析，很好理解：
-
-- 对于协变：
-    - 因为子类型继承了父类型，因此子类型一定具有父类型属性、方法等成员。将数组、接口的子类型视作父类型，并**使用父类型拥有的成员进行操作一定不会出问题**。反之则不然。
-    - 如果一个接口的泛型类型支持协变，必然要求在接口的方法内**不可以按照该类型来操作元素**。否则调用了此方法的使用者，传递协变类型给方法，方法中可能会调用不存在于该协变类型的成员，从而引发错误。
-- 对于逆变：
-    - 同样因为子类型继承了父类型，因此子类型的可操作成员多于父类型。如果一个委托原来是用来操作父类型的，那么**它的所有操作作用于子类型一定不会有问题**。反之则不然。
-    - 如果一个接口的泛型类型支持逆变，必然要求在接口的方法中**不能以该类型作为返回**。否则调用了此方法的使用者，以逆变类型拿到返回的对象后，调用者以逆变类型操作对象，可能会调用对象中不存在的成员，从而引发错误。
-
-定义泛型接口的协变类型，关键词为`out`。标记为out的类型仅能用于方法的返回，不可作为方法参数。但可以作为方法的泛型参数的泛型类型参数。
-
-```c#
-interface ICovariant<out R>
-{
-    R GetOne() { ... }  //OK
-    void DoSomething(R r) { ... } //Not OK，R类型不能作为参数类型，编译器报错
-    void DoSomething(Action<R> callback) { ... }  //OK R作为泛型的类型参数
-}
-```
-
-定义泛型接口的逆变类型，关键词为`in`。标记为in的类型仅能用作方法的参数（一般参数和泛型类型参数），不可用于方法的返回。
-
-```c#
-interface IContravariant<int A>
-{
-    void SetOne(A a) { ... } //OK
-    void DoSomething<T>() where T : A { ... }  //OK， 作为泛型方法的类型参数
-    R GetOne() { ... } //Not OK，A类型不能作为方法返回类型，编译器报错
-}
-```
-
-在同一个接口中，可以同时指定逆变和协变类型：
-
-```c#
-interface IVariant<out R, in A>
-{
-    R GetOne();  //OK
-    void DoSomething(A a);  //OK
-    R GetSomething(A a);  //OK
-}
-```
-
-> Java没有与变种的精确对照物。与之有些相似的，是**泛型通配符**。
-> Java允许给泛型添加通配符，以便执行编译时检查。
->
-> ```java
-> //==Java==
-> List<?> listUnknown = new ArrayList<A>();  //无边界通配符，表示List元素可以是任意类型
-> List<? extends A> listExtendsA = new ArrayList<A>(); //上界通配符，表示List元素类型必须是A或者A的子类
-> List<? super A> listSuperA = new ArrayList<A>(); //下界通配符，表示List元素类型必须是A或者A的父类
-> ```
->
-> 使用泛型通配符也有PECS原则，这与变种有些类似
->
-> - 如果要从集合中读取类型，并且不能写入，可以使用上界通配符；即生产者使用`extends`（Producer Extends，即PE）。 
-> - 如果要从集合中写入数据，并且不需要读取，可以使用下界通配符；即消费者使用`super`（Consumer Super，即CS）。
-> - 如果既要存又要取，那么就不要使用任何通配符
-
-> 泛型通配符虽然与变种有些类似，但是它们是不同的东西：
->
-> - 变种针对数组、委托是一律支持的；针对接口是给接口的泛型类型施加的限制条件；泛型通配符是给实例化的对象施加的限制条件。
-> - 变种对于声明的接口具有永久约束；泛型通配符仅仅对声明的变量时有效，声明另一个变量可以更换约束。
-> - 泛型的变种是由于C#“真”泛型带来的要求，变种过程中运行时类型发生了改变（因为封闭后的泛型类的类型不同）；而泛型通配符更像是语法糖，它仅在编译阶段起作用，在进入运行时后由于类型擦除便不再需要类型转变。
->     - 这么说主要为了便于理解。严格来说泛型通配符也不完全只是语法糖，对于用extends限定上界的通配符，编译器在做类型擦除时会擦除到上界类型，而非到Object。
-
-# C# 5.0 —— 字数越少，事儿就越大
-
-C#5.0的语法更新，只有2个。但这丝毫不影响它是一个跨时代语法创新。如果给C#语法的创新等级排个序的话，C#3.0排第一，C#5.0则排第二。
-
-## 调用者信息（Caller Information）
-
-有时为了调试或者诊断，开发者可能希望知道调用自己编写的类的方法的调用者是谁。调用者信息就能解决这个问题。
-
-调用者信息通过几个预置特性标注方法参数来实现，具体说来：
-
-1. 被调用者方法提供几个参数，用于接收调用者信息。这些参数都必须拥有默认值。
-2. 对这几个参数标注预置的特性。
-3. 调用者正常调用该方法，并且保持用于接收调用者信息的字段为默认值。
-4. 方法在调用时，会自动将调用者的信息填入被特性标注的对应参数内。方法的编写者可以使用这些信息。
-
-可用的调用者信息特性：
-
-- CallerMemberNameAttribute：修饰string类型参数，用于填入调用者的成员名称（方法名、委托名等）。
-- CallerFilePathAttribute：修饰string类型参数，用于填入调用者所在的源码文件路径信息。
-- CallerLineNumberAttribute：修饰int类型参数，用于填入调用者所在源码中的行号。
-- CallerArgumentExpressionAttribute（C#10.0引入）：修饰string类型参数，用于填入指定的方法参数在调用使用的表达式代码文本。（这个很高级，不过这里我们不举例，放到C#10.0再举例）
-
-我们直接看例子：
-
-```c#
-public void TracedMethod(int param1, int param2, 
-    [CallerMemberName] string methodName = null,
-    [CallerFilePath] string sourceFilePath = null,
-    [CallerLineNumber] int sourceLineNumber = 0)
-{
-    Console.WriteLine("该方法被“"+methodName+"”调用。调用位置：文件"+sourceFilePath+"，行号"+sourceLineNumber+"。");    
-}
-
-//调用
-obj.TracedMethod(1,3);  //调用者信息参数会被自动填充。
-```
-
-## 异步编程（Asynchronous Programming）
-
-可以这样说，任何CShaper，都绕不开异步编程。
-
-C#支持的异步模型，有下面几种：
-
-- 异步编程模型(Asynchronous Programming Model，APM)——通过暴露Begin和End方法来启动异步线程。这种模式在\.Net之前就已经存在，C# 1.0便提供了支持。现在不再推荐使用。
-- 基于事件的异步模式(Event-based Asynchronous Pattern，EAP)——通过方法启动线程，通过事件注册回调。在方法完成时触发事件，执行回调。这种模式于\.NetFramework2.0引入，在之前的C#中普遍使用，现在不再推荐使用。
-- 基于任务的异步模式(Task-based Asynchronous Pattern，TAP)——通过Task启动任务，并等待任务返回。
-
-我们讲C#的异步编程，特指TAP，并且特指结合了async/await的TAP。它是一种全新的异步模型，而且是语法级别的。它的出现可以说是跨时代的。我们这一章只讲它，其他的模式在这里不做介绍。
-
-如果你写过js，且用的ES6以上的语法，一定对async、await关键词和promise模型不陌生。这其实正是由\.NetFramework4.5（对应的正是C# 5.0）首创的。Task便是基于允诺模型的。C# 5.0的语法更新核心更是几乎完全围绕异步编程。异步的思想对之后诸多语言的发展都产生了深远的影响。
-
-### 为什么要用异步
-
-我们来看一个来自官网的例子：
-
-假设有AB两台服务器，都只有5个线程可用，且都在处理请求。此时，这两个服务器都接收到6个并发请求。每个请求执行一个I/O操作。
-
-未运行异步代码的服务器A，5个线程占满之后，会对第6个请求进行排队。因为IO操作在线程内被同步等待，A必须等到5个线程中的一个完成了I/O密集型工作并结束线程，才能继续处理第6个请求。而当这个条件达成时，服务器A实际已经收到了第20个请求，由于队列过长，服务器响应开始变慢。
-
-运行有异步代码的服务器B，5个线程也在占用中，此时也需对第6个请求排队，但由于使用了异步，在I/O密集型工作开始时，正在等待I/O工作完成的线程控制权会得到释放，而无需等到I/O结束。因而，该线程可以转去处理其他请求。在收到第200个请求时，传入请求队列依然很小，服务器不会变慢。
-
-### 如何理解异步和线程的关系
-
-提到异步大家最容易想到的是多线程。但是在理解C#的异步时，不应等同于线程去思考。事实上在默认情况下，任务会在当前线程上执行，且会在适当的时候将工作委托给框架、CLR、操作系统（如int中断）。（参考JS，JS实际上是跑在单线程上的，但是也支持异步）
-
-不过，开发者仍然可以显式的通过一个新的线程来启动一个任务。
-
-异步编程适合下列场景：
-
-- **I/O绑定**：代码会“等待”某些数据。例如：从Web服务下载数据。可用于提高线程利用率，避免线程因等待I/O任务而被空耗和引起排队。一般而言，它的代码形式为等待一个async方法，该方法返回Task或Task\<TResult>。
-- **CPU绑定**：代码要执行开销巨大的计算。例如：游戏伤害计算。可用于避免占用大量CPU时间的代码卡死UI。一般而言，它的代码形式为等待一个由Task.Run启动的后台线程。
-
-事实上：IO绑定的异步任务一般跑在当前线程上；CPU绑定的任务一般跑在新的线程上。
-
-### Task、Task\<TResult>和异步方法
-
-在\.NetFramework4.0(C#4.0)时已经引入Task类，但那时它还仅仅是\.Net的类库更新。虽然已经引入了新的TAP模式，但是还不支持async/await关键词。到了C#5.0，引入可等待方法后，异步不在需要回调的嵌套，可以自然的书写异步代码。这时才正式引爆了异步时代。
-
-Task类和Task\<TResult>用来描述一个任务。其中，Task可描述任意返回类型的任务；Task\<TResult>则用于描述任务的执行结果返回TResult类型数据的任务。这两个类可以用于定义可等待方法和异步方法。任务允许被异步的执行，也可以允许在异步方法中被等待。
-
-我们来看两个概念：
-
-- **可等待方法**：是指返回值为Task、Task\<TResult>的方法。若未添加async关键词，该方法不是异步方法。非异步方法的主体不可以使用`await`运算符。但是，该方法在被调用时，依然可以被等待（即作为await运算符的操作数）。
-
-- **异步方法**：是指在定义时添加了`async`关键词，返回值为Task、Task\<TResult>、void（不推荐）之一的方法。异步方法内可以使用`await`运算符，用于等待可等待方法的执行结果。异步方法如果返回不是void，那么它也是可等待方法。
-
-异步方法名称，一般约定以Async结尾。
-
-这里多说几句：在C#7.0以后，可等待方法不一定必须返回Task类，也可以是任何具有GetAwaiter方法的类，这也包括由扩展方法提供的GetAwaiter。
-
-异步方法的工作原理是这样的：
-
-代码执行至await运算符语句时，会将当前语句的执行挂起，把后续要执行代码注册成回调，并创建任务状态机，记录当前同步上下文以便在Resume时能够回到当前同步上下文中继续执行。同时它将控制权交出，还给调用方。等到await所等待的任务结束后，代码会Resume到await语句的位置，将任务的返回结果取出，继续执行剩下的代码。
-
-这里稍微解释下await运算符，它的返回类型是被等待的任务的结果类型，已去除了Task外壳。如：对于Task\<int>类型的任务，await运算符等待该任务，返回的是int类型。
-
-关于**同步上下文**，这里就不作介绍了，它在异步编程之前就已经存在。感兴趣的读者可以自行查阅资料。或者，在下面讲到异步的死锁问题时，会推荐一篇文章。
-
-我们来看一个例子，这个例子依然来自官方文档：
-
-```c#
-[1]  public async Task<int> GetUrlContentLengthAsync()
-[2]  {
-[3]      var client = new HttpClient();
-[4]      Task<string> getStringTask = client.GetStringAsync("https://docs.microsoft.com/dotnet");
-[5]      DoIndependentWork();
-[6]      string contents = await getStringTask;
-[7]      return contents.Length;
-[8]  }
-[9]  void DoIndependentWork()
-[10] {
-[11]     Console.WriteLine("Working...");
-[12] }
-```
-
-为了便于描述，我将上面的代码标上了行号。下面我们来看看异步方法的执行过程：
-
-1. 调用者调用GetUrlContentLengthAsync方法，该方法以同步方式执行到\[4]。
-2. \[4]的等式右侧为一个可等待的方法，它返回Task\<string>。该句会立刻返回。由于尚未等待该任务的返回，程序可以继续向下执行到\[5]。
-3. \[5]处调用的DoIndependentWork为同步的方法，因而会继续同步执行\[9]方法，并打印“Working...”到屏幕。
-4. 执行完DoIndependentWork后，继续同步执行到\[6]。此时，getStringTask可能还未返回。程序会挂起当前线程，并将剩下的语句\[6]和\[7]注册为getStringTask任务的回调，并创建任务状态机。然后程序会返回给GetUrlContentLengthAsync的调用者，交出线程控制权。
-5. 等到getStringTask任务完成后，会触发回调。程序Resume到\[6]，并取出getStringTask的执行结果作为await表达式的值，继续执行剩下步骤。
-6. 程序执行到\[7]，方法结束，返回contents.Length。
-7. 调用者拿到GetUrlContentLengthAsync的返回值，并继续执行后续操作。
-
-这里有个细节，所谓交出线程控制权并不是让操作系统将线程释放掉，而是将线程交还给调用者或者线程池，以便调用者可以继续其他工作或者线程池可以对线程进行重新分配。
-
-### 使用新线程启动任务
-
-可以使用`Task.Run`方法显式的使用新线程启动一个任务。
-
-```c#
-var task = Task.Run(() => 
-{
-    DoSomethingInANewThread();
-    AndSoOn();
-});
-await task;
-```
-
-Lambda表达式所描述的方法将会在新的线程中执行。这种情况下，await语句会在线程执行结束时Rusume，并继续向下执行。
-
-由于线程池的机制，可能并非所有任务都会立刻启动，有可能会排队。这具体要看线程池的使用情况。
-
-### 等待多个任务
-
-对于多个执行中的任务，如果要同时等待所有任务结束，可以使用`Task.WhenAll`方法。
-
-```c#
-var task1 = DoSomethingAsync();
-var task2 = Task.Run(()=> Task.Delay(3000));
-var task3 = Task.Run(()=> Task.Delay(1000));
-await Task.WhenAll(task1, task2, task3); //同时等待所有任务结束
-```
-
-对于多个执行中的任务，如果要等待至少一个任务返回，可以使用`Task.WhenAny`方法。
-
-```c#
-var task1 = DoSomethingAsync();
-var task2 = Task.Run(()=> Task.Delay(3000));
-var task3 = Task.Run(()=> Task.Delay(1000));
-await Task.WhenAny(task1, task2, task3); //等待至少一个任务返回
-```
-
-### 异步的优势
-
-- 它是语言级别的异步编程模型。
-
-    开发者不必费心于异步设计模式，以及类库对设计模式的支持问题。可以使用简洁的语法实现异步。
-
-- 它自带线程池管理和线程复用，却不需要用户过多关心。
-
-    它可以轻松地启动一个线程，也可以将线程从I/O等待中释放。它自带线程池管理，可以高效率的复用线程。
-
-- 获取结果和捕获异常变得十分容易。
-
-    利用await运算符，可以像获取同步方法的返回一样，轻松的获取异步方法的结果。并且，使用了await运算符的任务，会将未捕获的异常抛出至等待任务的方法中，可以像处理同步的异常一样处理它。
-
-- 非常便于书写，避免回调的嵌套，使代码干净整洁。
-
-    开发者可以像书写同步方法一样，按照逻辑顺序书写对异步方法的调用。尤其在一个方法内有多个异步调用的情况下，不用出现一堆回调的嵌套这样难看的代码。
-
-### 异步的死锁（deadlock）问题
-
-尽量不要混用await/async和`Task.Wait`，使用不当可能导致死锁问题。例如：你在某个方法中使用`Task.Wait`等待一个方法，该方法内使用`await`等待一个任务。
-
-这是因为`Task.Wait`会导致在线程中同步等待，原始线程不会得到释放。而被启动的Task在结束后，又需要回到原始的同步上下文所在线程继续执行，也就是原始线程。因为原始线程还在同步阻塞中，所以导致死锁。
-
-不仅`Task.Wait`。使用`task.Result`，`tast.GetAwaiter().GetResult()`也同样存在死锁问题。
-
-推荐采用以下步骤避免死锁问题：
-
-- 在调用第三方返回Task的方法时，如果你不确定对方的实现是否规范，而你又想使用Task.Wait时，请在Task.Wait之前调用`ConfigureAwaiter(false)`。
-- 如果你在编写可能被广泛调用的异步方法类库，请在返回任务前、await某个任务时调用`ConfigureAwaiter(false)`。
-- 如果你打算用async/await，建议一路async/await到底。
-
-`ConfigureAwaiter(false)`的含义，简单说来就是：告诉Awaiter，在结束后不必回到调用它的原同步上下文所在线程中继续执行，而是可以任意选择一个线程继续执行。
-
-另外，上述死锁问题仅存在于I/O绑定的情况。使用Task.Run启动的任务不会有死锁的问题。
-
-希望深入了解的读者可以参考官方博客，[这篇](https://devblogs.microsoft.com/dotnet/configureawait-faq/)讲的非常清楚。
-
-### 异步的Java对照
-
-> 看到这里，很多熟悉Java的人应该联想起了`Future`接口。诚然，它的表现与async/await有些像，尤其在大名鼎鼎的第三方框架Spring提供了`@Async`注解后，可以很方便的给一个方法标注为异步方法，并返回一个Future。这使得调用异步方法可以同调用同步方法一样书写，也能方便的等待并获取Future的返回值。但是，它们与C#的任务编程模式并不等效：
->
-> - 通过`@Async`标注的方法，一定跑在另一个线程上。这与Task默认跑在相同线程上不同。
-> - 虽然也能比较方便的使用Future的get方法等待任务的返回结果，但是这将导致当前线程阻塞，直到Future所指示的线程返回后才能继续执行。当前线程并不会在运行到get时得到释放，它将始终被占用着。
-
-> 事实上，Java没有与async/await一致的异步机制。
----
-
-C#的核心大版本到5.0就告一段落了。从6.0开始，C#进入了小步快跑的阶段。更新速度明显加快，更新的点也越来越细致。
-
-# C# 6.0 —— 语法糖机枪
-
-从6.0起，C#跟随\.Net Core一同进入了敏捷开发时代。每个版本的更新点的数量会开始变多，更新内容也变得激进起来。不过大部分更新点也变得比较微小，描述它们的篇幅也将会明显减少。本文也会小步快跑起来。
-
-## 异常筛选器
-
-try-catch块中，可以在catch语句添加`when`条件
-
-```c#
-try
-{
-    doSomething();
-}
-catch (CustomException e) when (e.Message.Contains("数据库"))
-{
-    Console.WriteLine("数据库错误");
-}
-catch (CustomException e) when (e.Message.Contains("网络"))
-{
-    Console.WriteLine("网络错误");
-}
-catch (CustomException e)
-{
-    Console.WriteLine("出现错误");
-}
-```
-
-## 属性初始化表达式
-
-现在可以直接给属性初始化：
-
-```c#
-public string Name { get; set; } = "张三";
-```
-
-如果属性只读，现在也可以这样书写，此时属性只有getter，而不必提供setter：
-
-```c#
-public string Name { get; } = "张三";
-```
-
-## null传播运算符
-
-C# 6.0引入两个用作于引用类型的运算符`?.`和`?[]`。
-
-- `?.`的对应物是成员访问运算符`.`。
-- `?[]`的对应物是索引器运算符`[]`。
-
-它们的含义是：
-
-- 如果a的计算结果为null，则`a?.x`或`a?[x]`的结果为null。
-- 如果a的计算结果非null，则`a?.x`或`a?[x]`的结果为`a.x`或`a[x]`。
-
-如果一个表达式中有多个连续的`?.`或`?[]`，它们采用最小化求值策略：从左侧开始，运算链中只要一个`?.`或`?[]`运算返回null，则链的其余部分不会执行。因而它们也叫Null传播运算符。
-
-```c#
-obj?[0]?.Property?.Method();  //从左到右，第一个遇到的null，会导致后面的运算符都不被计算，表达式直接返回null
-```
-
-常见的，我们可以这样调用委托方法
-
-```c#
-someDelegate?.Invoke(); //如果委托为null则不执行
-```
-
-## 字符串内插（String Interpolation）
-
-`$`开头的字符串，可以实现字符串中插入表达式。方法是在字符串内通过{}包裹表达式。
-
-基础用法示例：
-
-```c#
-$"你好，{name}！今天是星期{dayOfWeek}。天气：{weather}";
-```
-
-字符串内插还支持添加对齐方式和格式信息描述，语法为
-
-```c#
-{<内插表达式>[,<对齐方式>][:<格式字符串>]}
-```
-
-其中后面两部分都是可选的。
-
-- 内插表达式就是可以包含`{}`的字符串，`{}`中为表达式，会自动计算ToString。特别的，如果`{}`中的值为null，会被视作string.Empty
-- 对齐方式为整数。如果值为正，则为右对齐；如果值为负，则为左对齐。它的数值表示表达式字符串的最小字符数。等同于PadLeft和PadRight方法。
-- 格式字符串为string，它用于描述格式。如果提供格式字符串，则表达式结果必须拥有ToString(string format)的方法。譬如DateTime类就有这种方法。表达式会自动调用该方法。
-
-```c#
-var date = DateTime.Now;
-var dateString = $"今天是{date:yyyy年MM月dd日}";
-```
-
-> 字符串内插php、python等语言都支持。Java并不支持。
-
-内插字符串中，如果含有花括号字符，需要使用两个相同花括号进行转义，即`{{`和`}}`
-
-注意，如{}内表达式包含条件表达式`?:`，需要将整个表达式包裹在圆括号内。这是因为:在这里有语义，表示格式字符串的起始。
-
-\$符号和@符号可以组合使用。在C#6中只能先`$`后`@`。而到了C#8，可以任意切换顺序。
-
-```c#
-var name = "张三";
-var str1 = $@"哈哈哈\哈哈!\\{{{name}}}";  //合法，输出为 哈哈哈\哈哈!\\{张三}
-var str2 = @$"哈哈哈\哈哈!\\{{{name}}}";  //在C#6.0中非法，在C#8.0以后合法
-```
-
-## nameof运算符
-
-nameof表达式可用于取变量、类型或成员的名称，作为字符串常量。
-
-需要注意：
-
-- 类型下定义的非静态成员，也可以用`nameof(类型.成员)`来取名字。
-- nameof针对变量、成员返回的是对象名称，而非类型名称。
-- nameof是编译时求值，而非运行时。
-- 如之前提到过的，`@`开头的变量，`@`并不是变量名的一部分
-
-```c#
-var name1 = nameof(System.DateTime); //值为 DateTime
-var name2 = nameof(List<int>);  //类型名，值为 List
-var name3 = nameof(List<int>.Count); //取类型的Count属性，Count不是静态的，这里合法，值为 Count
-var name4 = nameof(List<int>.Add); //同理，取类型的Add方法，Add也不是静态的，值为 Add
-
-var numbers = new List<int> { 1, 2, 3 };
-var name5 = nameof(numbers);  //变量名，值为 numbers
-var name6 = nameof(numbers.Count); //属性名，值为 Count
-
-var @new = 5;
-var name7 = nameof(@new); //@不是名字的一部分，值为 new
-```
-
-## 索引初始化表达式
-
-初始化器得到了增强，可以在初始化器中使用索引。
-
-```c#
-var matrix = new Matrix
-{
-    [0, 0] = 1.0,
-    [0, 1] = 0.2,
-    [1, 0] = 1.1,
-    [1, 1] = 3.3
-};
-var dict = new Dictionary<string, double>
-{
-    ["PI"] = 3.14,
-    ["PHI"] = 0.618
-};
-```
-
-甚至，可以跟属性一同初始化：
-
-```c#
-var mixed = new Mixed
-{
-    Title = "混乱",
-    HelloWord = "侬好",
-    [0] = 1,
-    [1] = 1,
-    [2] = 2,
-    [3] = 3,
-    Ok = false,
-    ["Top", 1] = 8848
-};
-```
-
-十分的方便。
-
-## C# 6.0的其他改进
-
-- 静态引用（Static Using)：已在C# 1.0时介绍过。
-- 表达式主体（Expression-Bodied Member）：6.0支持的比较少，我们等到C# 7.0再一起讲。
-- Catch和Finally块中，现在支持使用await运算符了。
-
-# C# 7.0—— Python是个好东西
-
-## out变量声明
-
-out关键词在调用方法时现在可以同时声明变量。
-
-以前必须这样写：
-
-```c#
-//Old写法
-int intValue;
-var success = int.TryParse("1", out intValue);
-```
-
-现在可以合并成：
-
-```c#
-var success = int.TryParse("1", out var intValue);
-```
-
-## 元组（Tuple Type）
-
-元组是7.0中比较有趣的更新，我们稍微多花点时间讲一讲。
-
-设想两个场景：
-
-- 你发现需要定义一个类或结构，来封装几个变量。这个类的属性会很少，因此你懒得去定义。
-- 你要编写一个方法，该方法需要返回不止一个值，你既不想专门定义一个类，又不想使用out关键词（你觉得out不够优美）。
-
-此时，你当然可以考虑匿名类型。不过C# 7.0提供了更好的选择：元组。
-
-元组，这里特指C# 7.0引入的ValueTuple。需要与\.Net Framework 4.0引入的Tuple类做区分。这里明显是借鉴了python中的元组语法。
-
-元组的定义格式为圆括号，中间定义一组数据，用逗号分隔。
-
-```c#
-(double, int) tX = (1.0, 2);  //二元元组类型
-(double, int, int) tY = (1.0, 2, 77);  //三元元组类型
-(double, int, int, string) tZ = (1.0, 2, 77, "你好坏");  //四元元组类型
-```
-
-使用元组，可以很方便的将数个变量组合在一起：
-
-```c#
-var a = 1;
-var b = 2;
-var t = (a, b); //生成元组
-```
-
-元组可以分为**命名元组**和**未命名元组**
-
-- 命名元组在定义时指定了元组内元素的名称，因而需要通过指定的名称访问元组内元素
-- 非命名元组未指定元组内元素的名称，使用默认命名访问元组内元素。默认命名为`Item1`、`Item2`、`Item3`...
-
-```c#
-(int, int) t1 = (1, 2);  //未命名元组
-var t1A = t1.Item1; 
-var t1B = t1.Item2;
-
-(int A, int B) t2 = (1, 2); //命名元组
-var t2A = t2.A;
-var t2B = t2.B;
-```
-
-命名元组还可以直接在赋值时指定名称：
-
-```c#
-var t3 = (A: 1, B: 2); //赋值并指定元素名称
-```
-
-元组也支持嵌套：
-
-```c#
-var t = (1, 2, (3, (4, 5)));
-```
-
-比较有趣的一点是，元组跟Tuple类的定义类似，最多只支持到8个泛型参数。为了实现多于8个元素的元组，第8个泛型参数会使用ValueTuple\<T>类型来实现。所以本质上是通过元组的嵌套来实现的。但是，编译器给我们变了个魔术，你可以定义圆括号内有超过8个元素的元组，并且可以直接使用`Item9`、`Item10`等访问它的元素，而不会有问题，编译器自动会把它转成嵌套的ValueTuple。
-
-### 元组的赋值
-
-看下面的例子：
-
-```c#
-(int, int) t1 = (1, 2);
-(int A, int B) t2 = (3, 4);
-t2 = t1;  //合法
-(int C, int D) t3;
-t3 = t2;  //也合法
-```
-
-可见，元组的元素名称并不重要。事实上，元组只有元素类型的顺序才是重要的。
-
-### 元组的解构（Deconstruction）
-
-元组支持解构语法。所谓解构，就是将元组拆成多个变量。
-
-```c#
-int left;
-int right;
-(left, right) = (1, 2); //解构语法，1和2分别赋值给left和right。
-```
-
-或者在元组的解构同时声明变量：
-
-```c#
-(var left, var right) = (1, 2);
-```
-
-还支持使用单独var对所有声明变量进行自动的类型推断：
-
-```c#
-var t = ("a", 1);
-var (a, b) = t;  //a为string， b为int
-```
-
-### 自定义类的解构方法
-
-任何一个类，都可以通过添加Deconstruct方法来解构成元组。
-
-定义Deconstruct需要满足：
-
-- 返回`void`
-- 参数全部用`out`修饰
-- 需要解构成几元元组，就提供几个参数。参数类型顺序就是元组元素类型的顺序。
-
-```c#
-public class Person
-{
-    //此处省略属性、构造器等
-
-    public void Deconstruct(out string firstName, out string lastName)  //解构成二元元组
-    {
-        firstName = FirstName;
-        lastName = LastName;
-    }
-    public void Deconstruct(out string firstName, out string lastName, out string province, out string city) //解构成四元元组
-    {
-        firstName = FirstName;
-        lastName = LastName;
-        province = Province;
-        city = City;
-    }
-}
-
-var person = new Person("张", "三", "江苏", "南京");
-var (firstName, lastName, province, city) = person;  //自动调用类的解构方法
-```
-
-特别的，Deconstruct方法可以是扩展方法。
-
-### 何时使用元组
-
-从之前的介绍可见，使用元组十分灵活
-
-- 既可以将多个变量拼装成一个元组
-- 也可以通过解构将元组赋值给多个变量
-- 还可以通过类的解构变成元组
-
-语法十分灵活。
-
-回顾之前C#的语言语法。现在，用于临时返回一个相对简单的数据结构组合体，我们有以下的方式：
-
-- 使用匿名类型（C# 3.0引入）
-- 使用Tuple类 （\.Net Framework 4.0引入）
-- 使用ValueTuple结构（C# 7.0引入，也就是我们现在聊的元组）
-
-怎样抉择呢？我们来看下面的表格：
-
-| 类型 | 访问修饰符 | 类型 | 自定义成员名称 | 析构（终结器）支持 | 表达式树支持 |
-| --- | --- | --- | --- | --- | --- |
-| 匿名类型 | internal | class | ✔️ | ❌ | ✔️ |
-| Tuple | public | class | ❌ | ❌ | ✔️ |
-| ValueTuple | public | struct | ✔️ | ✔️ | ❌ |
-
-推荐首选元组。如果需要表达式树支持，则改用匿名类型。
-
-但是，如果你的数据需要序列化（如转成json），最好的做法是定义struct或者类，而非使用上述几种类型。
-
-## C# 7.0的模式匹配（Pattern Matching）
-
-模式（Pattern）其实更贴切的翻译应该是“范式”。即编写提供用于检查的范式。
-
-C#的模式匹配在7.0、8.0、9.0中都有更新。7.0虽然已经很好用了，但是不是完全体。
-
-模式匹配可以使用在以下语句中：
-
-- is表达式
-- switch语句
-- switch表达式（C# 8.0引入）
-
-模式匹配支持的类型：
-
-- **声明模式**（Declaration Pattern）：用于检查表达式的运行时类型，如果匹配成功，则将表达式结果分配给声明的变量。（C# 7.0）
-- **类型模式**（Type Pattern）：用于检查表达式的运行时类型。（C# 9.0）
-- **常量模式**（Constant Pattern）：用于测试表达式结果是否等于指定常量。（C# 7.0）
-- **关系模式**（Relational Pattern）：用于将表达式结果与指定常量进行大小关系的比较。（C# 9.0）
-- **逻辑模式**（Logical Pattern）：用于测试表达式在多个关系模式的逻辑组合下是否匹配。（C# 9.0）
-- **属性模式**（Property Pattern）：用于测试表达式的属性或字段是否与模式匹配。（C# 8.0）
-- **元组模式**（Tuple Pattern）、**位置模式**（Positional Pattern）：用于解构表达式结果，并测试结果值是否与模式匹配。（C# 8.0）
-- **var模式**（Var Pattern）：用于匹配任何表达式，并将其结果分配给声明的变量。（C# 7.0）
-- **弃元模式**（Discard Pattern）：用于匹配任何表达式，并丢弃结果。（C# 8.0）
-
-### 常量模式
-
-```c#
-if (book is null)
-{
-}
-
-switch (book) //任何类型都可以switch了
-{
-    case null:
-        break;
-}
-```
-
-### 声明模式
-
-```c#
-if (book is ArtBook artBook) //如果匹配成功，则book被赋值给artBook，且artBook为ArtBook类型
-{
-}
-switch (book)
-{
-    case ArtBook artBook:
-        break;
-}
-```
-
-> Java在14版本时，引入了预览的instanceof表达式模式匹配，并在Java 16变为正式语法。它相当于C#的is表达式模式匹配，并且仅支持声明模式。
-
-> ```java
-> //==Java==
-> if (obj instanceof Cat cat){
->     System.out.println(cat.getName());
-> }
-> ```
-> Java正式支持的模式匹配也就到这儿了。Java 17引入了switch的模式匹配不过还是预览版。Java支持模式种类太少，不够实用。
-
-### var模式
-
-```c#
-if (book is var anyBook) //这将匹配任何情况
-{
-}
-switch (book)
-{
-    case var anyBook:
-        break;
-}
-```
-
-注意一点：var模式匹配出来的变量，类型跟原始类型相同，而不是object。
-
-### case的when子句
-
-`switch`的`case`，现在支持`when`子句，用于提供附加条件。
-
-```c#
-switch (url)
-{
-    case string str when str.StartsWith("http://"):
-        break;
-    case string str when str.StartsWith("https://");
-        break;
-    case null:
-        break;
-    case var obj:
-        break;
-    default:   //由于有var模式在，它将匹配任何情况，因此default永远不会被执行。
-        break;
-}
-```
-
-剩下的模式，我们将在[C#8.0](#C#%208.0的模式匹配)和[C#9.0](#C#%209.0的模式匹配)中继续介绍。
-
-## 本地函数（Local Function）
-
-可以在方法体内的任意语句位置定义本地函数
-
-- 本地函数可以使用当前上下文，包括局部变量。
-- 本地函数仅在方法体内可见，无法在方法外使用。
-
-```c#
-public void Print()
-{
-    string Title = "这是标题";
-    void PrintTitle() //定义本地函数
-    {
-        Console.WriteLine(Title); //使用方法内的局部变量
-    }
-
-    PrintTitle(); //调用本地函数
-    Console.WriteLine("这是正文这是正文这是正文这是正文这是正文这是正文");
-}
-```
-
-## 表达式主体（Expression-Bodied Member）
-
-表达式主体在C# 6.0时候引入，C# 7.0进行了完善。
-
-| 成员 | 开始提供支持的版本 |
-| --- | --- |
-| 方法 | C# 6.0 |
-| 只读属性 | C# 6.0 |
-| 属性 | C# 7.0 |
-| 构造函数 | C# 7.0 |
-| 终结器 | C# 7.0 |
-| 索引器 | C# 7.0 |
-
-所谓表达式主体，就是用表达式表述方法的主体。该方法只有表达式所描述的一句话，表达式的值可作为方法的返回值。是为了简化方法的定义。
-
-表达式主体的语法，类似Lambda，也是用`=>`符号。由于主体内容变成了表达式，因而需要在表达式主体结束时添加语句结束符`;`：
-
-```c#
-public override string ToString() => $"{Name}是个好人";  //方法表达式主体
-public string Name => name;  //只读属性的表达式主体，这个语法比较特殊，它将只具有getter
-public string Name { get => name; set => name = value; }  //属性的表达式主体
-public Person(string name) => Name = name; //构造器表达式主体
-~Person() => Console.WriteLine($"{Name}完蛋了"); //析构方法（终结器）表达式主体
-public string this[int i] { get => arr[i]; set => arr[i] = value; }; //索引器表达式主体
-```
-
-## ref返回值、ref局部变量
-
-现在支持将值类型的引用，作为方法的返回。语法是加上`ref`关键词。倘若方法返回的是类的成员，则获得该返回的代码有可能直接修改该成员值。
-
-注意：在方法定义返回值上、方法return时、调用方法时、接收方法结果的局部变量上，都需要添加`ref`关键词。倘若方法调用和最终接收的变量未使用`ref`，则获取的不是引用！！
-
-```c#
-public class RefSample
-{
-    int number = 3;
-    public ref int GetNumber() => ref number; //返回number的引用
-    public override string ToString() => number.ToString();
-}
-
-var sample = new RefSample();
-ref var num = ref sample.GetNumber(); //获取引用，左右都要加上ref
-num *= 2;  //将引起sample对象的number改变
-var str = num.ToString();  //结果为 6 
-```
-
-## 弃元（Discard）
-
-弃元符号是一个单独的`_`。
-
-它用于丢弃任何计算结果，不受类型限制。使用弃元接收的值会被丢弃，因而无法获取弃元的值。
-
-弃元用于丢弃方法返回：
-
-```c#
-_ = int.TryParse("1", out var intValue); //丢弃是否转换成功的结果
-```
-
-弃元用于丢弃out参数：
-
-```c#
-var success = int.TryParse("1", out _); //丢弃转换后的数值，仅仅测试是否可以转换
-```
-
-元组中使用弃元：
-
-```c#
-var (_, _, _, name, _, age) = GetPersonInfo("张三");  //这里获取的是六元元组，我们只对其中两个元素感兴趣，其余的使用弃元丢弃
-```
-
-需要注意：因为`_`也是合法的变量名。为了向下兼容，`_`仍然可以被定义为变量，并不会报错。但若如此定义，`_`会覆盖弃元定义，退化为普通变量。作为普通变量的`_`，可以正常获取其值，也无法忽略类型，且不可重复定义。
-
-> Java没有弃元。不过这里还是要说两句：Java在9之前单个`_`也可以作为变量名，但是Java 9的语法更新禁止了单个`_`作为变量名。
-
-## throw表达式
-
-throw表达式，又叫引发表达式。是throw语句的表达式版本。因而可以嵌入更多场景中。
-
-嵌入条件运算符`?:`中：
-
-```c#
-var arg = args.Length == 0 ? throw new Exception("必须提供参数") : arg[0];
-```
-
-嵌入null合并运算符`??`中：
-
-```c#
-this.Name = name ?? throw new Exception("名字不可以为null");
-```
-
-嵌入表达式主体：
-
-```c#
-public void DoSomething() => throw new NotImplementException();
-```
-
-## 更多的可等待类型
-
-现在，你不仅可以等待Task和Task\<TResult>。
-
-首先就是引入了新的结构体ValueTask和ValueTask\<TResult>，用于可立刻返回的任务，从而避免使用Task和Task\<TResult>那样会在堆上分配空间，造成性能的浪费。
-
-```c#
-//以前返回一个从表达式结果来的Task
-public Task<int> GetOneAsync()
-{
-    return Task.FromResult(1);   //这会导致在堆上分配一个Task对象
-}
-//现在可以用下面的语句替换：
-public ValueTask<int> GetOneAsync()
-{
-    return new ValueTask<int>(1);
-}
-```
-
-其次，C# 7.0以后，允许你等待任何类的对象，只需要它实现GetAwaiter方法。
-
-GetAwaiter方法返回一个INotifyCompletion或者ICriticalNotifyCompletion接口的对象，该接口用于实现通知回调。
-
-此时你就成功的定义了一个**自定义可等待类**，该类也是可等待的。返回该类型的方法也是可等待方法，也可以使用async/await关键词升级为异步方法。
-
-### 异步方法构建器
-
-现在，你还可以定义一个类。这个类需要满足具有以下方法：
-
-- 一个`static`的Create方法，返回该类的对象。
-- 一个Start方法，传递IAsyncStateMachine接口类型的状态机引用参数。一个SetStateMachine方法用于设置状态机。
-- SetException、SetResult方法用于设置异常、写入结果。
-- AwaitOnCompleted、AwaitUnsafeOnCompleted方法用于描述执行到await语句之后应该怎么做，并在任务结束时调用Awaiter的对应方法，以及StateMachine的MoveNext方法。
-
-此时，你就成功定义了一个**自定义异步方法构建器**。
-
-你可以给你刚刚自定义的可等待类上添加特性AsyncMethodBuilderAtrribute，并在参数里指定使用`typeof(你定义的异步方法构建器)`。这样返回你定义的可等待类型的异步方法，会使用你定义的构建类替代系统默认的构建类，去完成异步方法的构建。
-
-## C# 7.0的其他改进
-
-- 二进制文本：现在可以直接定义二进制常量，语法为0bxxxxxx。例如：`0b101011100`
-- 数组分隔符：数字之间可以用`_`分隔。`_`可以有任意多个，可以加在除了第一位、最后一位和小数点前后的任何位置，包括放在`_`旁。例如：`var n = 1_2__3___4____5_____6_______7;`，它等价于`var n = 1234567;`。
-
-> Java引入二进制文本和数字分隔符要早得多，在Java 7便提供了支持。顺便说一句：C#至今还是不支持八进制文本，而Java和C++均支持。可能是八进制实在是用的太少了。
-
-# C# 7.1、7.2、7.3 —— 小碎步
-
-在C# 7.0的基础上，又推出了7.1、7.2、7.3。都不是太大的更新，但是内容不少。
-
-## C# 7.1的改进
-
-C# 7.1的更新如下：
-
-- 异步Main方法：现在允许程序入口点的Main方法是异步的，从而CMD应用也可以async/await到底。
-- default文本表达式：default运算符得到了进化，可以自动推断类型
-
-    ```c#
-    string def1 = default(string);  //以前的写法。
-    string def2 = default;  //新的语法，自动推断类型。
-    var def3 = default;  //NOT OK。报错，因为无法自动推断类型。
-    ```
-
-- 元组元素名称的自动推断：跟匿名类型一样，现在元组的元素名称也支持自动推断了。
-
-    ```c#
-    int n = 100;
-    Cat cat new Cat { Name = "喵呜" };
-    var tp = (n, cat.Name);   //元组的元素名称分别为 n、Name
-    _ = tp.n;
-    _ = tp.Name;
-    ```
-
-- 泛型参数的模式匹配：7.0的模式匹配不支持泛型参数的模式匹配，7.1支持了。例如，定义泛型方法`DoSomething<T>(IEnumerable<T> serial)`，在代码中可以对`serial`进行模式匹配，例如`if (serial is List<T>)`。
-
-## C# 7.2的改进
-
-C# 7.2我们还是需要展开来讲一讲，它包含一些和切片（Slice）有关的更新（切片显然又是借鉴了python），也为C# 8.0的索引、范围提供了基础。
-
-### in参数、readonly struct、ref struct、ref readonly返回值、ref readonly struct
-
-这一堆组合是不是看着眼花缭乱。事实上它们都是为了下面的Span\<T>做准备的。虽然这些修饰符都可以用于引用类型，但就其功能而言，一般还是被用作**修饰值类型**。我们一个一个说：
-
-**in参数**：现在可以用in修饰方法的参数。表示：
-
-1. 该参数在方法中会被以引用传递（同ref和out）。
-2. 方法中不会修改该参数。
-
-```c#
-public void SampleMethod(in int number)
-{
-    number = 7;   //NOT OK， 会导致编译器报错
-}
-```
-
-与ref和out不同，在调用含in参数的方法时，in关键词可以省略。
-
-```c#
-int n = 10;
-SampleMethod(n); //OK
-SampleMethod(in n);  //也OK
-```
-
-**readonly struct**：表明所定义的结构不可变。试图在初始化之后对结构本身和其中的任何字段重新赋值都会导致报错。使用该结构作为方法的参数传递时，推荐方法的参数用in修饰，以提示开发者该结构不可修改。定义在readonly struct中的字段、属性，都必须是readonly的：字段需要添加readonly修饰；属性则只能有getter，不能有setter（在C# 9.0之后，属性可以有init访问器）。
-
-**ref readonly返回值**：用ref readonly来修饰方法的返回，表明方法的返回是该类型的引用，并且不允许被修改。
-
-**ref struct**：是一种新的结构类型。该类型的结构仍**被分配到栈空间上**，却是引用类型的。它主要用来解决struct作为参数传递时会进行数据拷贝的问题，struct过大会导致性能开销。ref struct不允许实现接口。（当然，因为是struct，也不允许继承。）
-
-ref struct有很多**限制**：
-
-- 它不可以被装箱，因而无法赋值给object对象
-- 它无法被赋值给接口类型对象，因为它无法实现接口
-- 它不可以作为一般类或者结构的成员（但可以作为ref struct的成员）
-- 它不可以用于Lambda表达式或者本地函数
-- 它不可以用于异步方法
-
-有了上面的一堆，自然就有了**readonly ref struct**，表示这个结构是分配在栈上的、引用类型的、不可修改的。
-
-好了，到这儿为止，Span\<T>的准备工作都做好了。
-
-### Span\<T>、ReadOnlySpan\<T>
-
-Span\<T>、ReadOnlySpan\<T>是新增的只读引用结构（readonly ref struct）。它们是针对任意连续的内存区域的抽象。
-
-它们可以指向各种内存区域：
-
-- 指向托管内存（分配于堆空间）数组的全部或者一部分（切片）
-- 指向栈空间的数组（stackalloc分配的数组）
-- 指向原生（native）内存区域（如`int*`指针）
-
-设计它们的目的有二：
-
-1. 实现高性能的连续内存操作——它们真的非常的快。
-2. 为支持切片（Slice）提供基础。
-
-Span\<T>、ReadOnlySpan\<T>含Enumerator，可以用作`foreach`。它们也支持使用索引器。`foreach`和索引器返回的都是对元素的引用。因而允许使用`ref`变量接收，从而避免复制。
-
-ReadOnlySpan\<T>与Span\<T>的唯一不同是：通过`foreach`或者索引器返回的引用变量，ReadOnlySpan\<T>是只读的，而Span\<T>是允许修改的。（Span\<T>返回的变量用`ref`修饰，而ReadOnlySpan\<T>的用`ref readonly`修饰）
-
-需要注意，如果`foreach`时未使用`ref`变量接收，同样获取的不是引用，无法对它们进行修改。
-
-Span\<T>、ReadOnlySpan\<T>允许直接使用`stackalloc`关键词进行分配，从而使得`stackalloc`关键词现在可以用于非unsafe的上下文中。
-
-```c#
-Span<int> span = length <= 1024 ? stackalloc int[length] : new int [length];  //指向栈或者托管堆空间，不必在unsafe上下文中使用stackalloc
-```
-
-Span\<T>和ReadOnlySpan\<T>类型支持切片方法：
-
-```c#
-Span<int> span2 = span.Slice(1, 3); //获取从序号1开始，长度为3的切片
-```
-
-### 新增了几种泛型约束类型
-
-- Enum：用于约束泛型类型必须为枚举
-- Delegate：用于约束泛型类型必须为委托
-- MulticastDelegate：用于约束泛型类型必须为多播委托
-
-```c#
-public class SampleClass1<T> where T : Enum {}
-public class SampleClass2<T> where T : Delegate {}
-public class SampleClass3<T> where T : MulticastDelegate {}
-```
-
-### 命名参数不必跟在尾部
-
-这是命名参数的语法改进，从前的命名参数必须跟随在位置参数的尾部。还是使用之前的例子：
-
-```c#
-public class Shop
-{
-    public void Sell(string userName, string goodsName, int amount) {...}
-}
-
-Shop shop = new shop();
-
-shop.Sell("张三", goodsName: "毛巾", amount: 10);  //从前的语法。userName使用位置参数，另外两个参数使用命名参数。命名参数只能是尾部的参数。
-
-shop.Sell(userName: "张三", "毛巾", amount: 10);  //现在可以这样写。支持在任意参数上使用位置参数，或者命名参数。此处goodsName使用位置参数。
-shop.Sell(amount: 10, "毛巾", userName: "张三");  //还可以这样用，仍然是goodsName使用位置参数，其余使用命名参数
-```
-
-### C# 7.2的其他改进
-
-- `private protected`访问修饰符：表示protect and internal，这个已经在C# 1.0的可访问性修饰符中介绍过了。
-- 数值文字中的前导下划线：C#7.0新增的数字下划线，不支持直接紧跟在0x或者0b的后面，例如`0x_8f7d`在之前是非法的，但是现在合法了。
-- 条件ref表达式：ref赋值语句，现在可以支持条件运算符`?:`。例如：`ref var r = ref (arr != null ? ref arr[0] : ref otherArr[0]);`。注意在条件表达式运算结果上还要加`ref`。
-
-## C# 7.3的改进
-
-### 元组的`==`和`!=`支持
-
-元组现在可以直接用`==`和`!=`进行比较了。
-
-对于元组t1和t2：
-
-- `t1==t2`，相当于`t1.Item1 == t2.Item1 && t1.Item2 == t2.Item2 && ...`
-- `t1!=t2`，相当于`t1.Item1 != t2.Item1 || t1.Item2 != t2.Item2 || ...`
-
-同`&&`和`||`的特点一样，都是短路方式。上述`==`比较中，从左到右只要有一项不相等表达式就会返回false，从而跳过后面的比较；上述`!=`比较中，只要有一项相等就会返回false，从而跳过后面的比较。
-
-注意，`==`和`!=`比较都不会考虑字段名，仅仅考虑顺序。
-
-### 针对out变量声明的改进
-
-对C#7.0引入的允许在调用含out参数方法时同步声明变量的语法进行了扩充。允许一些之前不允许使用该语法的地方使用该语法：
-
-- 可以用在字段、属性的初始化表达式中使用
-- 可以在构造器串联中使用
-- 可以在查询子句中使用
-
-举例：
-
-```c#
-public class A 
-{
-    public A(out int a) { a = 1; }
-}
-public class B : A
-{
-    public A A { get; set; } = new A(out var a);   //初始化表达式支持out变量声明
-    public B()
-        :base(out var a)    //构造器串联支持out变量声明
-    {
-        Console.WriteLine(a);
-    }
-}
-```
-
-当然，这可能没啥用。
-
-### stackalloc初始化器
-
-stackalloc现在支持初始化器（Initializer）语法：
-
-```c#
-Span<int> span1 = stackalloc int[4];  //OK
-Span<int> span2 = stackalloc int[4] { 1, 2, 3, 4 };  //OK
-Span<int> span3 = stackalloc int[] { 1, 2, 3, 4 };  //OK
-Span<int> span4 = stackalloc[] { 1, 2, 3, 4 };  //OK，C# 8.0引入
-```
-
-### 特性可作用于自动属性的字段
-
-特性现在可以指定作用于用于实现自动属性的支撑字段。方法是在属性前使用特性时，指明作用域为`field`。
-
-```c#
-public class Some
-{
-    [field:NotNull]  //作用于属性背后的字段
-    public string Name { get; set; }
-}
-```
-
-### 含in参数的方法的改进
-
-定义含in和不含in参数的同名方法不会引起二义性了，可以并存。不过这种情况下，调用in方法必须带上`in`关键词。
-
-```c#
-//下面两个方法可以并存
-public void Some(int x){}
-public void Some(in int x){}
-
-int x = 1;
-Some(x);  //这将调用第一个方法
-Some(in x); //这将调用第二个方法
-```
-
-### C# 7.3的其他改进
-
-- ref局部变量可再分配：ref的变量之前只能赋值一次，现在可以在赋值后重新被赋值了。
-- 泛型约束又新增了一种：`unmanaged`。约束为非托管类型（值类型，并且如果是struct则每个字段都不能是引用类型，如果有struct嵌套，嵌套的struct也是）。例如：`public void Test<T>(T arg) where T : unmanaged {}`
-- 基于模式的fixed语句：从前的`fixed`只能用来固定数组或者string类型。由于现在新增了Span\<T>等类型，如果还按照之前的来则无法用`fixed`固定。现在，只要你的struct拥有一个方法：`ref [readonly] T GetPinnableReference()`，并且其中`T`是非托管类型的。该引用类型的struct就可以直接使用fixed语句固定。
-- 访问fixed数组的索引可以不用fixed：之前我们说过，unsafe的struct可以声明fixed的数组。现在如果某个指针想要指向该数组的某个元素，可以不用fixed块固定，但仍然需要使用unsafe上下文。例如`unsafe struct S`包含fixed的数组字段`public fixed int FixedField[100];`，则`int* ptr = s.FixedField[5];`语句不必使用fixed块。
-- 对方法重载（Overload）的编译器解析改进：对方法重载在各种情况下编译器如何解析做出了改进。这使得二义性错误变得更少发生。规则比较复杂，这里不多赘述。
-
-# C# 8.0 —— 当语法升级成为日常
-
-C# 8.0支持以下语法：
-
-## readonly成员
-
-针对struct，现在支持给属性、方法返回值添加`readonly`修饰符。表明属性、方法不会修改任何其他属性、字段的值。
-
-```c#
-public struct Sample
-{
-    private string name;
-    public readonly string Name  //OK，该属性不会修改任何字段、属性
-    {
-        get
-        {
-            return name;
-        }
-    }
-
-    public readonly void Set()  //NOT OK
-    {
-        name = "张三";  //编译器报错，readonly方法不允许修改成员
-    }
-}
-```
-
-特别注意：readonly成员只可用于struct，不支持用于class。
-
-## 接口的默认实现
-
-在从前，接口内的方法，不支持添加可访问性修饰符（如`public`，`private`），不支持声明为`static`，也不支持提供默认的实现。
-
-现在这些限制都没有了。接口的方法可以指定修饰符，还可以提供默认实现。
-
-对于实现接口的类，如果接口中有方法的默认实现，该类可以不必再提供此方法的实现，将继承接口的实现。
-
-> 时隔这么久，终于又可以对比了。早在Java 8（2014年）时，为了引入函数式接口，以便支持Stream编程，就已经引入了接口的默认实现。而C#则足足等到C# 8.0（2019年）才引入。这比Java晚了5年。不过Java 8的接口方法不支持private，要到Java 9以后才支持。
-
-## C# 8.0的模式匹配
-
-激动人心的时刻到了。C# 8.0对模式匹配进行了增强，不过它仍然不是完全体。在C# 9.0会再次增强。C# 8.0的模式匹配支持：
-
-### switch表达式
-
-switch表达式可以说是switch语句块的表达式形式。它具有返回值。
-
-switch表达式根据模式匹配的结果，从不同分支路径返回不同内容，每条路径上也都是表达式，且表达式的值都是同一种类型的，也就是整个switch表达式的返回类型。分支的表达式可以返回void，此时整个switch表达式也为void，不能赋值给变量。
-
-switch表达式的语法较switch语句有所调整：将待判断的表达式前置，并且删去原来switch的圆括号。紧随其后的花括号中不再有case语句，取而代之是`模式=>表达式`的形式，并用逗号分隔。
-
-看如下例子：
-
-```c#
-Animal animal = new Cat();
-var name = animal switch
-{
-    Cat cat => "猫猫",
-    Dog dog => dog.Name,
-    var anything => "啥啊", //跟enum、初始化器一样，这里的逗号也是可删可不删
-};
-```
-
-上例中，使用了之前提到的声明模式、var模式。
-
-switch表达式中使用声明模式、var模式时，可以结合弃元，丢弃该声明：
-
-```c#
-var isStr = obj switch
-{
-    string _ => true,
-    var _ => false
-};
-```
-
-上述例子中，var模式用来接收所有其他情况，保证了表达式覆盖所有可能路径。不过，switch表达式有个有坑的设定：定义表达式时不必覆盖所有分支情况。如果你的分支无法覆盖所有情况，编译器会给出警告，但不会报错。但是这样做是有风险的：swtich表达式的值如果赋值给变量，在运行时如果找不到分支对应，会在抛出`SwitchExpressionException`异常。
-
-```c#
-object obj = 1;
-var isStr = obj switch //未能覆盖所有情况，编译器给出警告
-{
-    string _ => true,  
-};   //这将导致抛出异常
-
-```
-
-switch表达式也同样支持when子句：
-
-```c#
-public bool IsHttp(string url) => url switch    //在此例子中，方法使用了表达式主体，而主体正是swtich表达式
-{
-    string httpUrl when httpUrl.StartsWith("http://") => false,
-    string httpsUrl when httpsUrl.StartsWith("https://") => true,
-    var other => throw new Exception("不是HTTP(s)协议的地址") //这里使用了throw表达式
-};
-```
-
-很显然，因为switch表达式是表达式，而它的分支也是表达式，因而，switch表达式是可以嵌套的：
-
-```c#
-var areYouOk = obj1 switch //R U OK? 
-{
-    string _ => obj2 switch
-    { 
-        Cat _ => obj3 switch
-        {
-            var _ => obj4 switch
-            {
-                var _ => true
-            }
-        },
-    },  
-};
-//这个该死的表达式会在obj1为string，obj2为Cat的情况下返回true，其他情况下抛出异常。
-```
-
-实际项目中建议不要这么干。
-
-> Java在12引入了增强switch的预览版；后在13支持了switch的返回值从而进化为switch表达式，同时支持在语句块内通过`yield`返回分支结果；最终在14放出正式版。但是，此时switch表达式仍不支持模式匹配。
-
-> Java的增强switch/switch表达式可以分为两种：
->
-> - 不将switch结果赋值给变量时，它是增强switch。分支内必须是语句。
-> - 将switch的结果赋值给变量时，它是switch表达式，分支内必须是表达式，或者使用yield返回值的语句块。
-
-> Java的增强switch/switch表达式语法跟C#的也是有些不同的，它更像原始的switch块：
->
-> - 它的语序跟原来switch语句基本一致：`switch`关键词在前，待检测表达式在后，并且用圆括号包裹。分支使用`case`关键词。默认分支
