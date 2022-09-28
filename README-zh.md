@@ -542,7 +542,7 @@ C#支持的可访问修饰符：
 
 直观的对比，请看如下表格：
 
-| 调用方的位置 | public | protected | internal | protected internal | private protected | private |
+| 调用方的位置 | public | protected internal | internal | protected | private protected | private |
 | ------- | --- | --- | --- | --- | --- | --- |
 | 在类内 | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ |
 | 派生类（相同程序集） | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ | ❌ |
