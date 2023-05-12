@@ -18,7 +18,8 @@ C#也使用了十年有余了。
     2. 计划转Java，或者纯粹好奇，想了解C#与Java有哪些异同的人。
 2. **Javaer**，或者其他非C#的开发者：
     1. 对C#好奇，想对C#做个全面了解的人。
-    2. 计划转C#，通过此文可以直接上手开发的人。（我知道没有😔）
+    2. 因编写多语言的SDK，需要实现C#版本的人。
+    3. 计划转C#，通过此文可以直接上手开发的人。（我知道没有😔）
 
 本文旨在：
 
@@ -156,6 +157,8 @@ C#也使用了十年有余了。
         - [为什么要用异步](#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E7%94%A8%E5%BC%82%E6%AD%A5)
         - [如何理解异步和线程的关系](#%E5%A6%82%E4%BD%95%E7%90%86%E8%A7%A3%E5%BC%82%E6%AD%A5%E5%92%8C%E7%BA%BF%E7%A8%8B%E7%9A%84%E5%85%B3%E7%B3%BB)
         - [Task、Task\<TResult>和异步方法](#tasktask%5Ctresult%E5%92%8C%E5%BC%82%E6%AD%A5%E6%96%B9%E6%B3%95)
+        - [为什么需要async/await](#%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81asyncawait)
+        - [异步方法工作原理](#%E5%BC%82%E6%AD%A5%E6%96%B9%E6%B3%95%E5%B7%A5%E4%BD%9C%E5%8E%9F%E7%90%86)
         - [使用新线程启动任务](#%E4%BD%BF%E7%94%A8%E6%96%B0%E7%BA%BF%E7%A8%8B%E5%90%AF%E5%8A%A8%E4%BB%BB%E5%8A%A1)
         - [等待多个任务](#%E7%AD%89%E5%BE%85%E5%A4%9A%E4%B8%AA%E4%BB%BB%E5%8A%A1)
         - [异步的优势](#%E5%BC%82%E6%AD%A5%E7%9A%84%E4%BC%98%E5%8A%BF)
@@ -278,11 +281,11 @@ C#也使用了十年有余了。
 下面是一些和\.Net有关的名词。（名词解释中出现的英文缩写，也会在列表中找到相关解释。）
 
 - **\.Net**，是一套框架，它主要由CLR和FCL组成。因为\.Net程序不仅仅支持一种语言编写，所以下面的各条术语都有前缀Common。Common翻译为公共，体现的是跨语言、通用。
-- **CLR**（公共运行时，Common Language Runtime），是CLI的具体实现，并且也是目前为止的唯一实现。它包含JIT编译器等组件。CLR有很多，包括\.NetFramework，\.NetCore，Mono\.Net，以及最新的\.Net等。
+- **CLR**（公共运行时，Common Language Runtime），是CLI的具体实现。它包含JIT编译器等组件。CLR有很多，包括\.NetFramework，\.NetCore，Mono\.Net，以及最新的\.Net等。（注:在一些文章中，CLR可能特指\.NetFramework的CLR。而其他CLR可能会采用CoreCLR、Mono CLR等描述）
 
     > CLR相当于Java的JVM。CLR与JVM的最主要区别在于：CLR在设计之初便被设计为与语言无关，而JVM被设计为特定于Java。
-    > > 当然，JVM虽然在设计时只考虑了Java，但由于它优秀的设计，和采用字节码这种中间代码，事实上很多优秀的语言也将JVM作为运行平台（这其中就有不少是嫌弃Java或者试图替代Java的）。例如Kotlin、Scala、Groovy等等，他们都可以编译生成JVM的字节码。
-    > > 虽然Java的语法不够炫酷，但是Java的生态很强、Java的开发者很强。虽然Java官方库不够凶狠，但是Java的第三方库十分强大。所以这也是为啥这么多语言想要干掉Java，却没有一个能够望其项背。后面我们会看到例子。
+    > > 当然，JVM虽然在设计时只考虑了Java，但由于它优秀的设计，和采用字节码这种中间代码，使得事实上很多优秀的语言也将JVM作为目标平台（这其中就有不少是嫌弃Java或者试图替代Java的）。例如Kotlin、Scala、Groovy等等，他们都可以编译生成JVM的字节码。
+    > > 虽然Java的语法不够炫酷，但是Java的生态很强、Java的开发者很强。虽然Java官方库不够凶狠，但是Java的第三方库十分强大。所以这也是为啥这么多语言想要干掉Java，却没有一个能够望其项背。
 
 - **CLI**（公共语言基础设施，Common Language Infrastructure），是微软公司向ECMA提交的一份语言和数据格式规范。包括CTS、CIL等。CLR实现了该规范。
 - **CTS**（公共类型系统，Common Types System），定义了能够在CLR上运行的语言规范。它定义了通用的数据类型。
@@ -294,8 +297,8 @@ C#也使用了十年有余了。
 - **托管代码**（Managed Code）和**非托管代码**（Unmanaged Code）：托管代码为可由编译器编译为CIL的代码。正常情况下我们编写的C#代码都是托管代码。调用其他非\.Net语言（如C++）编写的库，或使用unsafe上下文编写含指针操作的代码，属于非托管代码。托管代码是内存安全的，对已分配的内存空间由GC进行管理。
 - **GC**（垃圾回收器，Garbage Collector），它通过对象引用计数器管理对象的引用情况，并在对象失去所有引用后执行自动的内存回收工作，因而不必像C++一样手动free掉分配的内存空间。GC是所有高级语言中非常重要的内存管理机制。
 - **FCL**（框架类库，Framework Class Library），与CLR并列，是\.Net的重要促成部分。大家都明白，语言和语法只是一方面，真正要完成具体任务，离不开各种类库的帮助。而\.Net提供了大量官方的类库，功能强大，且覆盖极广。从前，CSharper有时倾向于选择官方类库而非第三方类库，很大程度上也是由于官方类库过于强大而培养出来的习惯，算是一种思维定式（俗称：微软大法好）。当然，随着\.Net本身的走向开放，CSharper们的心态现在也很开放了。因而github上C#的优秀开源项目也越来越多。FCL具体又可以划分为BCL和AppModel。
-- **BCL**（基础类库，Basic Class Library），\.Net较为底层的类库，与应用类型无关。基础类库可用于各种类型的开发场景中。
-- **AppModel**，是\.Net官方类库中，用于决定应用形态的框架性类库。包括 **WCF、WPF、WinForm、Webform、ASP\.NET MVC、ASP\.NET Core**等等等等。例如：WCF用于编写服务，并以各种方式（终结点）暴露服务（几乎已经淘汰）；WPF、Winform用于编写窗体应用；ASP\.NET系列用于编写Web应用等。
+- **BCL**（基础类库，Basic Class Library），\.Net较为底层的类库，与应用类型无关。基础类库可用于各种类型的开发场景中。（有时，BCL被特指为\.Net Framework的基础类库，而\.Net Core的基础类库事实上有自己的名字，它则被命名为CoreFX）
+- **AppModel**，是\.Net官方类库中，用于决定应用形态的框架性类库。包括 **WCF、WPF、WinForm、Webform、ASP\.NET MVC、ASP\.NET Core、Blazor**等等等等。例如：WCF用于编写服务，并以各种方式（终结点）暴露服务（几乎已经淘汰）；WPF、Winform用于编写窗体应用；ASP\.NET系列用于编写Web应用等。
 
     > 可以类比Java的SpringBoot，SpringMVC等。不同点是\.Net的这部分库都是官方的，而非第三方提供。
 
@@ -374,7 +377,7 @@ C#和\.Net发展，**关键节点**简要介绍：
     - 由于Linux在服务领域的一骑绝尘，\.Net不能跨平台的弊端逐渐显现出来。终于，有人看不惯\.Net的不跨平台了。Mono项目不依赖\.NetFramework的源码（也没法依赖，\.NetFramework并不开源），重新实现了\.Net CLR，即跨平台的Mono\.Net。再到后来的Unity3D、Xamarin，\.Net的第三方实现开始占领市场。
     - 同时，微软自家也在面临多版本问题，首先有互不兼容的3.5和4.5；其次，他们还为不同的系统定制了不同的\.Net。比如，他们为移动设备和XBOX定制了阉割版\.Net Portable。
     - 经过了漫长的封闭、服务器领域市场的不断衰退和Windows Phone的惨败之后。2014年，微软终于迎来了一位靠谱的CEO。他意识到了开放的重要性，开始积极拥抱开源和跨平台。微软开始积极筹备自家的跨平台\.Net。当时还仅仅考虑网站开发，计划命名为Asp\.Net MVC 6。后来随着项目的进行，微软改变策略，决心做成一个全面、通用的、跨平台的\.Net，并取命\.Net Core。
-        - 提到这位CEO，不得不吐槽两句。由于他是个印度裔（硅谷已经被印度CEO裔占领了），导致他上任后微软印度裔的开发人员数量大幅上升。因而，我们现在经常能在微软系的软件中，感受到各式各样满满咖喱风味的BUG。
+        - 提到这位CEO，不得不吐槽两句。他是印度裔（硅谷已经被印度CEO裔占领了），在他上任后微软印度裔的开发人员数量大幅上升。现在，我们现在经常能在微软系的软件中，感受到各式各样满满咖喱风味的BUG。
     - \.Net CLR的混乱局面由此便形成了。各式各样的CLR，互不兼容。如果想要重用你的代码，只能针对目标版本重新编译。而且，还需要考虑各版本的框架结构和类库、语法支持度问题，难免要针对不同CLR版本做出不同程度的代码修改。在当时，给人印象深刻的一点是：你下载的Nuget包里的lib目录下，会有许多并列的子目录，包括net30、net35、net45、net46、net461、netcoreapp2.2等等等等。每个目录均由相似的文件构成：都包含类库的dll和xml等文件。不同的是每个dll是面向不同的目标CLR编译的。而你自己写的类库，很多时候也不得不编译成各种不同的目标框架版本，以适应不同目标版本CLR的程序。
     - 因此，微软提出了\.Net Standard。这是一套标准，而非CLR的实现。其目的是将一众\.Net框架统一起来，提高他们的一致性，从而可以共享代码。\.Net Standard其实是一套API规范，目标代码的运行需要由各个\.Net CLR来具体实现。因而，\.Net Standard只能用来编写通用类库，而不能编写有入口的完整程序。使用\.Net Standard编译的类库，可以跑在支持\.Net Standard的任意\.Net实现上，只要CLR支持的\.Net Standard版本不低于你的库的目标\.Net Standard版本。从而实现了Mono\.Net，\.NetFramework，\.Net Core等不同版本的\.Net之间可以共享代码。有趣的是，\.Net Standard生成的dll打包进Nuget，也要放到lib目录下的netstandardx.x的子目录里。针对多种目标CLR和针对Standard的dll还是可以并存。
     - \.Net Standard是微软的无奈之举。这个尴尬的境地，到\.Net5后被使用新的方式彻底破解。
@@ -557,8 +560,7 @@ C#支持的可访问修饰符：
     - 特别的，对于嵌套的类，内部类的默认可访问性也是private
 
 > Java没有类似internal的修饰符。
-
-> Java的类不书写任何修饰符时，此类会被限制在仅Package内可访问，被称作friendly的（注意friedly并不是关键词）。需要注意，是限制在Package内，而非Module内。从C#角度理解，就是限制在命名空间内可访问。C#也没有这种机制的修饰符。
+> Java的类不书写任何修饰符时，此类会被限制在仅Package内可访问，被称作friendly的（注意friedly并不是关键词）。需要注意，是限制在Package内，而非Module内。由于Java的Package与文件目录是强绑定关系，所以也可以理解为限制在同一个文件夹下的代码中可访问。从C#角度理解，可以近似理解为限制在命名空间内可访问，C#也没有类似的修饰符。
 
 #### 其他修饰符
 
@@ -581,7 +583,7 @@ C#支持的可访问修饰符：
 > | 作用 | Java写法 | C#写法 |
 > | --- | --- | --- |
 > | 类不允许被继承 | `final class SomeClass {}` | `sealed class SomeClass {}` |
-> | 类只允许已知类继承<br/>(编译成字节码后无法被继承) | `sealed class SomeClass {}` | (无对应) |
+> | 类只允许已知类继承<br/>(编译成字节码后无法被继承) | `sealed class SomeClass {}` | (无对应，考虑方法使用`private protected`修饰) |
 > | 方法不允许被子类重写 | `public final String someMethod()` {} | `public string SomeMethod() {}` (第一种：基类方法禁止被子类重写)<br/>`public sealed override string SomeMethod() {}` (第二种：重写父类的方法并禁止被子类重写) |
 > | 方法允许被子类重写 | `public String someMethod() {}` | `public virtual string SomeMethod() {}` |
 > | 字段只能被赋值一次(值类型+string) | `private final String name = "张三";` | `private const string Name = "张三";` |
@@ -610,17 +612,19 @@ C#支持的可访问修饰符：
 特别注意：在C#中上述别名**完全等价**。
 
 > Java中一般大、小写的类型含义并不相同。大写开头的类型是包装类。基本等价于C#中的Nullable\<T\>（C#2.0引入）。
-> > 例如：Java中的Double，相当于C#中的double?。而C#中的Double和double完全等价。
+> > 例如：在Java中，Double是double的包装类，它相当于C#中的double?。而在C#中，Double和double完全等价，都指代System.Double结构。
 
 ### 隐式继承、Object类
 
-关于**隐式继承**，举例说明：enum（枚举）都隐式继承Enum类，delegate（委托）都隐式继承Delegate类，值类型均隐式继承ValueType类，数组都隐式继承Array类。查看这些基类，会发现其定义都是class。但是编译器处理这种隐式继承时，并不会都把它们都变成引用类型，而是按照语法约定确定是值类型还是引用类型。这种隐式继承关系是编译器变的魔术，你无法直接在代码中显式声明这种继承关系。隐式继承的好处是，所有对应类型都可以使用基类定义的方法，如enum都可以使用Enum类定义的HasFlag方法等。
+关于**隐式继承**，举例说明：所有枚举类型（enum）都隐式继承`Enum`类，所有委托（delegate）都隐式继承`Delegate`类，所有值类型均隐式继承`ValueType`类，所有数组都隐式继承`Array`类等等。查看这些被隐式继承的基类定义，会发现他们都是class。但是编译器处理这种隐式继承关系时，并不会把你声明的结构类型、枚举类型等处理成引用类型，而是会按照语法约定确定它们其实是值类型的，这是编译器变的魔术。正因如此，这些被隐式继承的类大都被定义为抽象类(abstract class)，你无法直接使`ValueType`类创建一个特定类型的Struct对象，但是你声明的任何Struct却实际上都继承了`ValueType`，从而可以被强制转换成`ValueType`类型。隐式继承的好处是，所有对应类型都可以使用这些基类定义的方法，如所有枚举类型都可以使用`Enum`类定义的`HasFlag`方法等。
 
-object类是极其特殊的类。C#中的任何类型，都隐式继承自object。任何类型的对象都能与object对象互转。这也包括值类型。
+这里必须要提一下`object`类。`object`类是极其特殊的类。C#中的任何类型，都隐式继承自`object`。任何类型的对象都能与object对象互转。这也包括值类型。
 
-object类定义了ToString、GetType、Equals、GetHashCode等方法。所有类型均可使用这些方法，也可以重写这些方法。
+`object`类并不是抽象的类，它可以被实例化。`new object()`实际上生成了一个空的对象。
 
-> 这与Java不同。Java中Object被认为是引用类型的基类，int属于基本类型，不是Object。
+`object`类定义了`ToString`、`GetType`、`Equals`、`GetHashCode`等方法。所有C#中的类型均可使用这些方法，大部分类型也可以重写这些方法。
+
+> .Net的Object与Java略有不同。Java中Object是所有引用类型的基类，但是int、double等属于基本类型，它们并不是Object。如果需要将int转为Object，则需要先装箱成Integer类的对象。
 
 ### 值类型 vs 引用类型
 
@@ -847,6 +851,8 @@ b[0][0] = 1;
 >
 > - `byte [] bytes= new byte[100]; //合法`
 > - `byte bytes [] = new byte[100]; //不合法`
+
+> Java的二维数组统一为`int [][] b`格式声明。对于不定长二维数组，可以使用`int [][] b = new int[2][];`格式声明，然后再针对每个元素声明`b[0] = new int[3];`; 对于定长的二维数组，则直接使用`int [][] b = new int[2][3];`这种格式来声明。
 
 #### 类（Class）
 
@@ -2357,7 +2363,7 @@ unsafe struct SomeStruct
 
 PS：事实上，我们会更多使用`IntPtr`和`Marsha1`来进行指针和非托管的内存操作。使用它们无需开启不安全上下文。
 
-> 虽然不是语法级别的支持，但是Java仍可以参考Unsafe类，它也能实现内存的直接操作。同样的，它也很少被用到。
+> Java针没有对指针等提供语法级别的支持。但是C#使用同`IntPtr`和`Marsha1`一样，Java仍可以使用`Unsafe`等类，实现对内存的直接操作。同样的，它也很少被用到。
 
 ---
 
@@ -3062,8 +3068,14 @@ Student student = new Student
 >
 > 事实上，很多公司明确要求禁止双括号初始化语法出现在项目中。
 
-> 只针对序列，在Java 9之后，List、Set、Map等接口增加了用于初始化并添加元素的新方法：静态的of方法，of方法的参数是可变参数，可以在初始化时一次性添加多个元素到序列中：
->
+> 只针对序列，有两种情况：
+> 1. 针对数组，Java有较为方便的初始化方式。
+> ```java
+> //==Java==
+> int [] a = { 1, 2, 3 };
+> int [][] b = { {1}, {2, 3}, {4} };
+> ```
+> 2. 对于非数组序列，在Java 9之后，List、Set、Map等接口增加了用于初始化并添加元素的新方法：静态的of方法，of方法的参数是可变参数，可以在初始化时一次性添加多个元素到序列中
 > ```java
 > //==Java==
 > List<String> list = List.of("a", "b", "c", "d", "e");
@@ -3502,9 +3514,13 @@ LINQ的用途十分广泛，如：
 - Excel查询
 - ...
 
-因为十分重要，在开始之前，我要再来强调一次：
+因为十分重要，在开始之前，我要再来强调一次： **针对IEnumerable接口，LINQ基于迭代器，因而也有延迟执行的特点！**
 
-**LINQ基于迭代器，因而也有延迟执行的特点！**
+而针对IQuerable接口，LINQ则是实现了更为神奇的功能，它也有延时执行的特点。
+
+事实上，针对这两个接口的抽象被设计得高度统一。对于使用者而言，它们的语法几乎完全一致。
+
+我们将在介绍查询扩展方法时详细描述两者的区别。
 
 下面我们将分别介绍两种语法：
 
@@ -3529,7 +3545,7 @@ IEnumerable<string> oldCatNames =
 查询表达式有以下特点：
 
 1. 查询的对象为一个可枚举或可查询对象
-2. 表达式的返回是一个迭代器
+2. 表达式的返回是一个迭代器（针对IEnumerable）或延后执行的表达式树（针对IQuerable）
 3. 以`from`开头，以`select`或者`group`结尾
 4. `from`和`select`、`group`之间中间可以包含`where`、`orderby`、`join`、`let`等子句
 5. `from`可以嵌套
@@ -3680,9 +3696,39 @@ var names = persons
 
 请读者思考，利用LINQ中的累加器方法（Aggregate），仅用一行代码，实现将一般的`xxx.xxx.xxx.xxx`格式的string类型的ip地址转换成uint值。
 
+\*
+
+\*
+
+\*
+
+我
+
+又
+
+是
+
+分
+
+隔
+
+符
+
+\*
+
+\*
+
+\*
+
+好了，公布答案：
+
+```csharp
+var ipInt = ip.Split('.').Aggregate(0u, (combined, next) => (combined << 8) + uint.Parse(next));
+```
+
 #### 针对IQueryable\<T>的查询扩展方法
 
-虽然了解针对IQueryable\<T>的查询扩展方法前，大家请先抛开刚刚满脑子的迭代器）
+（了解针对IQueryable\<T>的查询扩展方法前，大家请先抛开刚刚满脑子的迭代器）
 
 首先简单介绍下IQueryable接口，它继承自IEnumerable，是针对可查询数据源的一种抽象。它的定义如下：
 
@@ -3764,7 +3810,7 @@ THINK BIG！！我可以不按照Lambda的描述来执行，而是按照我们�
 
 要举例说明它的实际用处，没有比实体框架更合适的了。
 
-**实体框架**（Entity Framework，简称EF），是一套用于访问数据库的框架，通过LINQ to Entity，可以轻松使用LINQ语句来查询数据库内容。
+**实体框架**（Entity Framework，简称EF），是一套用于访问数据库的框架，通过LINQ to Entity，可以轻松使用LINQ语句来查询数据库内容。实体框架的前身是LINQ To Sql，它跟随.Net Framework 3.5发布，而Entity Framework则是在.Net Framework 4正式引入。
 
 在LINQ to Entity中，扩展方法Where会将传入的Lambda作为表达式树。在交给Provider进行语义分析并执行时，会根据表达式树将它转换为该语义对应的SQL的where语句。
 
@@ -3794,7 +3840,7 @@ limit 10, 10
 
 Linq to Entity的能力远远不止如此。它支持外键引用，支持关联查询，支持各种group by、join操作。就实际项目而言，目前还没有发现所需的查询操作用LINQ无法完成书写的。因此，作为CSharper，彻底告别Sql语句也是常有的事。
 
-多说两句，EF除了支持通过LINQ来查询数据，也支持数据的插入和更新。它还支持从代码生成数据库（Code First）和从数据库生成代码（DB First），使得数据库的设计、使用对变得更加容易，从而使开发者可以专注于代码的书写。
+多说两句，EF除了支持通过LINQ来查询数据，也支持数据的插入和更新。对于插入和更新的数据，EF也很好的支持了幂等性。它还支持从代码生成数据库（Code First）和从数据库生成代码（DB First），使得数据库的设计、使用对变得更加容易，从而使开发者可以专注于代码的书写。更绝的是，由于LINQ的抽象，当我们使用不同的EF提供程序来操作不同数据库（如：MySql，Sql Server）时，并没有什么不同。这也产生一个有意思的现象：如果某天我一拍脑袋决定把数据库从MySql挪到Sql Server上，只需做好数据迁移工作，而用Entity书写的代码仅仅需要修改一下引用的包和配置就行了，业务代码完全不用修改。
 
 现在你应该已经理解了，IQueryable\<T>的查询扩展方法能做些什么了。是不是很棒？
 
@@ -4094,11 +4140,11 @@ C#支持的异步模型，有下面几种：
 - **I/O绑定**：代码会“等待”某些数据。例如：从Web服务下载数据。可用于提高线程利用率，避免线程因等待I/O任务而被空耗和引起排队。一般而言，它的代码形式为等待一个async方法，该方法返回Task或Task\<TResult>。
 - **CPU绑定**：代码要执行开销巨大的计算。例如：游戏伤害计算。可用于避免占用大量CPU时间的代码卡死UI。一般而言，它的代码形式为等待一个由Task.Run启动的后台线程。
 
-事实上：IO绑定的异步任务一般跑在当前线程上；CPU绑定的任务一般跑在新的线程上。
+事实上：**IO绑定的异步任务一般跑在当前线程上；CPU绑定的任务一般跑在新的线程上**。
 
 ### Task、Task\<TResult>和异步方法
 
-在\.NetFramework4.0(C#4.0)时已经引入Task类，但那时它还仅仅是\.Net的类库更新。虽然已经引入了新的TAP模式，但是还不支持async/await关键词。到了C#5.0，引入可等待方法后，异步不在需要回调的嵌套，可以自然的书写异步代码。这时才正式引爆了异步时代。
+在\.NetFramework4.0(C#4.0)时已经引入Task类，但那时它还仅仅是\.Net的类库更新。虽然已经引入了新的TAP模式，但是还不支持async/await关键词。到了C#5.0，引入可等待方法后，异步不再需要回调的嵌套，可以自然的书写异步代码。这时才正式引爆了异步时代。
 
 Task类和Task\<TResult>用来描述一个任务。其中，Task可描述任意返回类型的任务；Task\<TResult>则用于描述任务的执行结果返回TResult类型数据的任务。这两个类可以用于定义可等待方法和异步方法。任务允许被异步的执行，也可以允许在异步方法中被等待。
 
@@ -4112,11 +4158,70 @@ Task类和Task\<TResult>用来描述一个任务。其中，Task可描述任意�
 
 这里多说几句：在C#7.0以后，可等待方法不一定必须返回Task类，也可以是任何具有GetAwaiter方法的类，这也包括由扩展方法提供的GetAwaiter。
 
+### 为什么需要async/await
+
+这就不得不提及“回调地狱”了。
+
+在.NetFramework4中，基于TAP的异步模型，由于尚未引入async/await，在Task完成后如果需要继续完成其他后续任务，需要将Task执行后的工作内容通过委托注册到Task的ContinueWith方法中，作为回调。Task会在完成后自动执行该回调。这时，如果需要按照顺序完成多个异步任务，则需要进行回调的嵌套。
+
+举个例子：先调用API接口拿到Token，再携带Token调用其他接口，再用获得的数据操作数据库，再将操作记录写入log文件。代码如下：
+
+```csharp
+var task = httpClient.GetFromJsonAsync<TokenResult>("http://xxxxx/get-token") //这里使用了较新版本的HttpClient以简化示例
+    .ContinueWith(result1 =>
+    {
+        httpClient.GetFromJsonAsync<DataResult>($"http://xxxxx/get-data?token={result1.Result.Token}")
+        .ContinueWith(result2 =>
+        {
+            dbContext.workingDaysInYears.FirstAsync(row => row.Id == result2.Result.Id) //假设一定在库里
+            .ContinueWith(result3 =>
+            {
+                result3.Result.Marked = true;
+                dbContext.SaveChangesAsync()
+                .ContinueWith(result4 =>
+                {
+                    using (var sw = new StreamWriter("/var/log/marked.log"))
+                    {
+                        sw.WriteLineAsync($"ID: {result2.Result.Id} is marked")
+                        .ContinueWith(result5 =>
+                        {
+                            Console.WriteLine("任务完成");
+                        });
+                    }
+                });
+            });
+        });
+    });
+```
+
+可以看出来，随着嵌套的任务越多，代码的可读性就越差，维护起来也就越困难。海量的回调就被称作回调地狱。这点在js引入async/await之前，写前端的小伙伴应该感触最深。
+
+而引入async/await后，声明的异步方法，实际将交给异步处理程序来执行。异步处理程序在遇到await语句时，会构建状态机，自动将await语句之后的剩余操作注册成回调。这使得写异步代码时可以像写同步代码一样方便。在异步方法中，需要等待异步任务的结果，只需要调用await即可获取，并继续书写后续执行代码即可。注意await运算符获取的是任务的返回结果，已经不再是Task。如：对于Task\<int>类型的任务，使用await运算符等待该任务，返回的是int类型。
+
+上述代码就可以优化成：
+
+```csharp
+var tokenResult = await httpClient.GetFromJsonAsync<TokenResult>("http://xxxxx/get-token");
+var dataResult = await httpClient.GetFromJsonAsync<DataResult>($"http://xxxxx/get-data?token={tokenResult.Token}");
+var entity = await dbContext.Table1.FirstAsync(row => row.Id == result2.Result.Id); //假设一定在库里
+entity.Marked = true;
+await dbContext.SaveChangesAsync();
+using (var sw = new StreamWriter("/var/log/marked.log"))
+{
+    await sw.WriteLineAsync($"ID: {result2.Result.Id} is marked");
+}
+Console.WriteLine("任务完成");
+```
+
+代码瞬间清爽了很多。
+
+还有一点，如果被await的异步方法抛出了异常，异常也可以直接通过try-catch来捕获，如同处理同步异常一样，非常方便。
+
+### 异步方法工作原理
+
 异步方法的工作原理是这样的：
 
 代码执行至await运算符语句时，会将当前语句的执行挂起，把后续要执行代码注册成回调，并创建任务状态机，记录当前同步上下文以便在Resume时能够回到当前同步上下文中继续执行。同时它将控制权交出，还给调用方。等到await所等待的任务结束后，代码会Resume到await语句的位置，将任务的返回结果取出，继续执行剩下的代码。
-
-这里稍微解释下await运算符，它的返回类型是被等待的任务的结果类型，已去除了Task外壳。如：对于Task\<int>类型的任务，await运算符等待该任务，返回的是int类型。
 
 关于**同步上下文**，这里就不作介绍了，它在异步编程之前就已经存在。感兴趣的读者可以自行查阅资料。或者，在下面讲到异步的死锁问题时，会推荐一篇文章。
 
@@ -4214,15 +4319,15 @@ await Task.WhenAny(task1, task2, task3); //等待至少一个任务返回
 
 推荐采用以下步骤避免死锁问题：
 
-- 在调用第三方返回Task的方法时，如果你不确定对方的实现是否规范，而你又想使用Task.Wait时，请在Task.Wait之前调用`ConfigureAwaiter(false)`。
+- 在调用第三方返回Task的方法时，如果你不确定对方的实现是否规范，而你有需要使用`Task.Wait`时，请在调用`Task.Wait`之前调用`ConfigureAwaiter(false)`。
 - 如果你在编写可能被广泛调用的异步方法类库，请在返回任务前、await某个任务时调用`ConfigureAwaiter(false)`。
-- 如果你打算用async/await，建议一路async/await到底。
+- 如果你打算用async/await，建议一路async/await到底，不要混用await和Task.Wait。（Async All the Way）
 
 `ConfigureAwaiter(false)`的含义，简单说来就是：告诉Awaiter，在结束后不必回到调用它的原同步上下文所在线程中继续执行，而是可以任意选择一个线程继续执行。
 
 另外，上述死锁问题仅存在于I/O绑定的情况。使用Task.Run启动的任务不会有死锁的问题。
 
-希望深入了解的读者可以参考官方博客，[这篇](https://devblogs.microsoft.com/dotnet/configureawait-faq/)讲的非常清楚。
+希望深入了解的读者可以参考官方博客，[这篇博客](https://devblogs.microsoft.com/dotnet/configureawait-faq/)讲的非常清楚。
 
 ### 异步的Java对照
 
@@ -4278,6 +4383,26 @@ public string Name { get; set; } = "张三";
 ```csharp
 public string Name { get; } = "张三";
 ```
+
+额外的，此处需要设想这样的场景：
+
+定义Student类，其中定义了只读属性Scores，为`List<int>`类型。为了避免出现null，在定义时使用了属性初始化表达式语法设置了初始值为`new List<int>()`。当我需要实例化Student对象时，我使用初始化器语法来初始化Scores属性时就会遇到问题：它已经被初始化过了，无法再次被赋值（属性初始化表达式先于初始化器执行）。
+
+因此，这里引入了一种新的语法，用于处理这种情况：
+
+```csharp
+var student = new Student
+{
+    Scores =
+    {
+        100,
+        80,
+        60
+    }
+}
+```
+
+这里没有在初始化器中使用`Scores = new List<int> { ... }`，因为那样不合法，而是将要添加的元素直接写入`=`后面的`{}`中，这实际上调用了`List<int>`的Add方法。
 
 ## null传播运算符
 
